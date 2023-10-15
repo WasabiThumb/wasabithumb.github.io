@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "module": "es6",
+    "target": "es5",
+    "jsx": "react",
+    "allowJs": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "strict": true,
+    "outDir": "./dist/",
+    "lib": [
+      "es2015",
+      "dom"
+    ]
+  },
+  "exclude": ["node_modules", "static", "dist", "private"]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "portfolio",
+  "version": "1.0.0",
+  "description": "Wasabi's Portfolio",
+  "private": true,
+  "scripts": {
+    "pack-private": "node buildSrc/private.js",
+    "git-add-private": "git add static/\\*.private",
+    "build": "webpack"
+  },
+  "pre-commit": [
+    "pack-private",
+    "git-add-private"
+  ],
+  "author": "WasabiThumb",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.8.5",
+    "@types/pbkdf2": "^3.1.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "pbkdf2": "^3.1.2",
+    "pre-commit": "^1.2.2",
+    "ts-loader": "^9.5.0",
+    "tweetnacl": "^1.0.3",
+    "typescript": "^5.2.2",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
+  }
+}
