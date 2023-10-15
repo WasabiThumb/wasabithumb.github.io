@@ -89,7 +89,7 @@ const version = (() => {
             return { mode: 'production', devtool: false, version: buildscript.version };
         } else {
             const postfix = commit.sha().slice(0, 7);
-            return { mode: 'development', devtool: 'source-map', version: `${buildscript.version}-git-${postfix}` };
+            return { mode: 'development', devtool: 'inline-source-map', version: `${buildscript.version}-git-${postfix}` };
         }
     }).then(async (dat) => {
         await setVersion(dat.version);

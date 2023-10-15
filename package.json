@@ -15,9 +15,12 @@
   "author": "WasabiThumb",
   "license": "Apache-2.0",
   "devDependencies": {
+    "@babel/core": "^7.23.2",
+    "@babel/preset-env": "^7.23.2",
     "@types/node": "^20.8.5",
     "@types/pbkdf2": "^3.1.0",
     "copy-webpack-plugin": "^11.0.0",
+    "csso": "^5.0.5",
     "pbkdf2": "^3.1.2",
     "pre-commit": "^1.2.2",
     "ts-loader": "^9.5.0",

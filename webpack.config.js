@@ -2,8 +2,11 @@ const path = require("path");
 const webpack = require("webpack");
 const CopyPlugin = require("copy-webpack-plugin");
 const version = require("./buildSrc/versioning");
+const csso = require("csso");
+const babel = require("@babel/core");
 
 
+const dist = path.resolve(__dirname, "dist");
 module.exports = (async () => {
     const vd = await version();
     return {
@@ -24,7 +27,26 @@ module.exports = (async () => {
                 patterns: [
                     "static/index.html",
                     "static/.key.private",
-                    { from: "static/assets", to: path.resolve(__dirname, 'dist', 'assets') }
+                    {
+                        from: "static/assets",
+                        to: path.resolve(__dirname, 'dist', 'assets'),
+                        transform: ((content, path) => {
+                            if (vd.mode === "development") return content;
+                            if (/\.css$/.test(path)) {
+                                return csso.minify(content.toString('utf8')).css;
+                            } else if (/\.jsx?$/.test(path)) {
+                                return babel.transformAsync(content.toString('utf8'), {
+                                    presets: ["@babel/preset-env"],
+                                    targets: "> 0.25%, not dead",
+                                    filename: path,
+                                    configFile: false
+                                }).then((d) => {
+                                    return d.code;
+                                });
+                            }
+                            return content;
+                        })
+                    }
                 ]
             }),
             new webpack.BannerPlugin({
@@ -36,7 +58,7 @@ module.exports = (async () => {
         },
         output: {
             filename: 'bundle.js',
-            path: path.resolve(__dirname, 'dist')
+            path: dist
         }
     };
 });
