@@ -2,6 +2,7 @@
 **New Version (Winter 2023)**
 
 ## Building
+Output is in the ``dist`` directory
 ```shell
 npm install
 npm run build
