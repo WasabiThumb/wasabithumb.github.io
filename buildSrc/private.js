@@ -31,6 +31,47 @@ const derivedKey = pbkdf2.pbkdf2Sync(
     'sha512'
 );
 const PROCESSED = [];
+const checkNotChanged = ((data, dest) => {
+    const nonceLength = nacl.secretbox.nonceLength;
+    let nonce = new Uint8Array(nonceLength);
+    let storedBox = new Uint8Array(8192);
+
+    try {
+        fs.accessSync(dest, fs.constants.F_OK);
+    } catch (e) {
+        return false;
+    }
+
+    const handle = fs.openSync(dest, 'r');
+    try {
+        let head = 0;
+        let read;
+        while (head < nonceLength) {
+            read = fs.readSync(handle, nonce, head, nonceLength - head, head);
+            if (read < 1) return false; // unexpected EOF
+            head += read;
+        }
+
+        head = 0;
+        while (true) {
+            const rem = storedBox.length - head;
+            if (rem < 1) {
+                const newBox = new Uint8Array(storedBox.length * 2);
+                newBox.set(storedBox);
+                storedBox = newBox;
+            }
+            read = fs.readSync(handle, storedBox, head, rem, head + nonceLength);
+            if (read < 1) break;
+            head += read;
+        }
+        storedBox = storedBox.subarray(0, head);
+    } finally {
+        fs.closeSync(handle);
+    }
+
+    const expected = nacl.secretbox(data, nonce, derivedKey);
+    return nacl.verify(expected, storedBox);
+});
 const encrypt = ((file) => {
     const rel = path.relative(privateDir, file);
     console.log("Encrypting file \"" + rel + "\"");
@@ -45,6 +86,10 @@ const encrypt = ((file) => {
     }
 
     const data = fs.readFileSync(file);
+    if (checkNotChanged(data, dest)) {
+        console.log("File was not changed since last encrypt, skipping");
+        return;
+    }
     const handle = fs.openSync(dest, 'w');
 
     const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
