@@ -13,7 +13,7 @@
     "git-add-private"
   ],
   "author": "WasabiThumb",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@types/node": "^20.8.5",
     "@types/pbkdf2": "^3.1.0",
