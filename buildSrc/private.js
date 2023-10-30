@@ -124,3 +124,4 @@ const walk = ((head, action) => {
 });
 walk(privateDir, encrypt);
 walk(staticDir, cleanup);
+fs.writeFileSync(path.join(staticDir, "assets/data/private_contents.json"), JSON.stringify(PROCESSED), { encoding: "utf8" });

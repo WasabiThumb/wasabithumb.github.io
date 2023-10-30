@@ -54,7 +54,10 @@ module.exports = (async () => {
             })
         ],
         resolve: {
-            extensions: ['.tsx', '.ts', '.js']
+            extensions: ['.tsx', '.ts', '.js'],
+            fallback: {
+                buffer: require.resolve("buffer/")
+            }
         },
         output: {
             filename: 'bundle.js',

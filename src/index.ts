@@ -13,3 +13,19 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+
+import Loader from "./util/loader";
+import Navigator from "./struct/navigation";
+
+
+const loader: Loader = window.loader;
+const navigator: Navigator = new Navigator();
+
+navigator.navigate("home");
+
+loader.removeToken("bundle-load");
+loader.onLoad(() => {
+    console.log("test");
+    // loader.forceLoad();
+});
+

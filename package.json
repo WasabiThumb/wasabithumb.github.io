@@ -17,6 +17,9 @@
   "devDependencies": {
     "@babel/core": "^7.23.2",
     "@babel/preset-env": "^7.23.2",
+    "@stablelib/base64": "^1.0.1",
+    "@stablelib/hex": "^1.0.1",
+    "@stablelib/utf8": "^1.0.1",
     "@types/node": "^20.8.5",
     "@types/pbkdf2": "^3.1.0",
     "copy-webpack-plugin": "^11.0.0",
@@ -28,5 +31,8 @@
     "typescript": "^5.2.2",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "buffer": "^6.0.3"
   }
 }
