@@ -16,16 +16,21 @@
 
 import Loader from "./util/loader";
 import Navigator from "./struct/navigation";
+import {LIB_VERSION} from "./util/version";
+import KeyStore from "./struct/keystore";
 
+const navigator: Navigator = new Navigator();
+window.addEventListener("hashchange", () => {
+    navigator.checkHash();
+});
+navigator.checkHash();
 
 const loader: Loader = window.loader;
-const navigator: Navigator = new Navigator();
-
-navigator.navigate("home");
-
 loader.removeToken("bundle-load");
 loader.onLoad(() => {
-    console.log("test");
+    console.log(`Loaded Portfolio bundle v${LIB_VERSION}`);
     // loader.forceLoad();
 });
+
+(window as unknown as { keystore: KeyStore })["keystore"] = KeyStore;
 

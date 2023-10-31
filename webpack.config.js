@@ -26,7 +26,7 @@ module.exports = (async () => {
             new CopyPlugin({
                 patterns: [
                     "static/index.html",
-                    "static/.key.private",
+                    "static/key.private",
                     {
                         from: "static/assets",
                         to: path.resolve(__dirname, 'dist', 'assets'),

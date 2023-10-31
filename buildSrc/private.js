@@ -1,6 +1,6 @@
 /*
 The "private" directory is not included in the Git repo, and will be ignored if it does not
-exist. If it does exist, its contents will be encrypted using a key set in private/.key,
+exist. If it does exist, its contents will be encrypted using a key set in private/key,
 and saved to the "static" directory appended with ".private". This allows only users with
 the key to see certain content on the site, without the need for a preprocessor like PHP.
 */
@@ -13,7 +13,7 @@ const nacl = require("tweetnacl");
 
 const privateDir = path.resolve(__filename, "../../private");
 const staticDir = path.resolve(__filename, "../../static");
-const privateKeyFile = path.resolve(privateDir, ".key");
+const privateKeyFile = path.resolve(privateDir, "key");
 
 try {
     fs.accessSync(privateKeyFile, fs.constants.F_OK);

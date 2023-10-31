@@ -7,6 +7,7 @@ export default class ShowcasePageWidget implements PageWidget {
     readonly renders: true = true;
 
     init(page: Page) {
+        console.log(page);
     }
 
     refresh(page: Page) {

@@ -30,6 +30,7 @@ const createXHRAgent: (() => XHRAgent) = (() => {
 })();
 const hasFetch: boolean = !!window.fetch;
 
+
 type RequestDataType = "json" | "bytes" | "text" | undefined;
 type RequestData<T extends RequestDataType> = T extends "json" ? any :
     (T extends "bytes" ? Uint8Array : string);
@@ -48,6 +49,9 @@ type Request = RequestFunction & {
 const requestFunction: RequestFunction = (<T extends RequestDataType>(method: "GET" | "POST", url: string | URL, data?: any, type?: T) => {
     if (hasFetch) {
         return fetch(url, { method: method, body: data }).then((res) => {
+            if (res.status < 200 || res.status > 299) {
+                throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
             switch (type) {
                 case "json":
                     return res.json();
@@ -61,6 +65,14 @@ const requestFunction: RequestFunction = (<T extends RequestDataType>(method: "G
         return new Promise<RequestData<T>>((res, rej) => {
             const xhr: XHRAgent = createXHRAgent();
 
+            switch (type) {
+                case "bytes":
+                    xhr.responseType = "arraybuffer";
+                    break;
+                default:
+                    xhr.responseType = "text";
+                    break;
+            }
             xhr.onreadystatechange = function () {
                 if (xhr.readyState !== 4) return;
                 if (xhr.status < 200 || xhr.status > 299) {

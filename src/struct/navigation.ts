@@ -5,21 +5,44 @@ import {absoluteURL} from "../util/url";
 import {AssetElement, AssetManager} from "./asset";
 import {PageWidget, PageWidgets} from "./widget";
 import KeyStore from "./keystore";
+import {AsyncLock} from "../util/lock";
+import RenderDispatch from "../util/render";
+import {ConstantData} from "../util/constdata";
 
 
+type NavigateCallback = ((oldPage: IPage, newPage: IPage) => void);
 export default class Navigator {
 
     private _activePage: IPage;
-    private _pageCache: Record<string, { mode: "async", value: Promise<IPage> } | { mode: "sync", value: IPage }>;
+    private readonly _pageCache: Record<string, { mode: "async", value: Promise<IPage> } | { mode: "sync", value: IPage }> = {};
+    private readonly _callbacks: NavigateCallback[];
+    private readonly _lock: AsyncLock;
+    private _firstAutoNavigate: boolean = true;
+
 
     constructor() {
         this._activePage = Navigator._getInitialPage("204");
-        this._pageCache = {};
         this._pageCache[this._activePage.id] = { mode: "sync", value: this._activePage };
+        this._callbacks = [];
+        this._lock = new AsyncLock();
     }
 
     get activePage(): IPage {
         return this._activePage;
+    }
+
+    checkHash(): void {
+        const hash: string = window.location.hash;
+        const dest: string = ((hash.length < 2) ? "home" : hash.substring(1)).toLowerCase();
+        if (dest === this._activePage.id.toLowerCase()) return;
+        if (this._firstAutoNavigate) {
+            this._firstAutoNavigate = false;
+            window.loader.addToken("navigator-initial-page");
+            this.onNavigate(() => {
+                window.loader.removeToken("navigator-initial-page");
+            });
+        }
+        this.navigate(dest);
     }
 
     navigate(id: string): void {
@@ -41,14 +64,35 @@ export default class Navigator {
         }
 
         (async () => {
-            this._transitionStart();
-            const page: IPage = await prom;
-            this._transitionStop();
-            this._swap(this._activePage, page);
+            await this._lock.lock();
+            try {
+                this._transitionStart();
+                const page: IPage = await prom;
+                this._transitionStop();
+                for (let cb of this._callbacks) {
+                    try {
+                        cb(this._activePage, page);
+                    } catch (e) {
+                        console.error(e);
+                    }
+                }
+                this._swap(this._activePage, page);
+            } finally {
+                this._lock.unlock();
+            }
         })().catch((e) => {
             console.error(e);
+            try {
+                if (window.location.hash.toLowerCase() === `#${id.toLowerCase()}`) {
+                    window.history.replaceState(undefined, document.title, window.location.protocol + "//" + window.location.host + window.location.pathname + "#404");
+                }
+            } catch (ignored) { }
             this.navigate("404");
         });
+    }
+
+    onNavigate(cb: NavigateCallback) {
+        this._callbacks.push(cb);
     }
 
     async isPrivate(id: string): Promise<boolean> {
@@ -62,13 +106,11 @@ export default class Navigator {
     }
 
     private async _doNavigate(id: string): Promise<Page> {
-        console.log("doing navigate: " + id);
         await new Promise<void>((res) => {
             window.loader.onRemoveToken(LoaderDOMContentToken, () => {
                 res();
             });
         });
-        console.log("awaited dom-content");
 
         const pageDataURL = `assets/pagedef/${id}.html`;
         const priv: boolean = await this.isPrivate(id);
@@ -117,13 +159,13 @@ export default class Navigator {
             }
         }
 
-        let el: HTMLDivElement;
-        const existing: HTMLDivElement | null = document.body.querySelector(`[data-page="${id}"]`);
+        let el: HTMLElement;
+        const existing: HTMLElement | null = document.body.querySelector(`[data-page="${id}"]`);
         if (!!existing) {
             el = existing;
             el.innerHTML = "";
         } else {
-            el = document.createElement("div");
+            el = document.createElement(id === "home" ? "main" : "section");
             el.classList.add("dyn-page");
             el.setAttribute("data-page", id);
             document.body.appendChild(el);
@@ -136,18 +178,29 @@ export default class Navigator {
         return new Page(id, el, widgets);
     }
 
+    private readonly _txControl: TransitionController = new TransitionController();
     private _transitionStart() {
-
+        this._txControl.start();
     }
 
     private _transitionStop() {
-
+        this._txControl.stop();
     }
 
+    private readonly _swapFadeControllers: FadeController[] = [];
     private _swap(oldPage: IPage, newPage: IPage) {
+        for (let controller of this._swapFadeControllers) {
+            controller.end();
+        }
+        this._swapFadeControllers.length = 0;
+
         oldPage.close();
         newPage.open();
         this._activePage = newPage;
+        try {
+            const dest: string = window.location.protocol + "//" + window.location.host + window.location.pathname + (newPage.id === "home" ? "" : `#${newPage.id}`);
+            if (dest !== window.location.toString()) window.history.pushState(undefined, document.title, dest);
+        } catch (ignored) { }
 
         const extract: ((page: IPage) => HTMLElement | null) = (page) =>
             (page instanceof Page) ? page.root :
@@ -155,23 +208,32 @@ export default class Navigator {
         const oldElement: HTMLElement | null = extract(oldPage);
         const newElement: HTMLElement | null = extract(newPage);
 
+        const me = this;
+        function activate(element: HTMLElement) {
+            me._swapFadeControllers.push(new FadeController(element, FadeDirection.IN, 8));
+            element.classList.add("active");
+            element.removeAttribute("aria-hidden");
+            element.focus({ preventScroll: true });
+            element.parentElement?.prepend(element);
+        }
+
+        function deactivate(element: HTMLElement) {
+            me._swapFadeControllers.push(new FadeController(element, FadeDirection.OUT, 8));
+            element.classList.remove("active");
+            element.setAttribute("aria-hidden", "true");
+        }
+
         if (!!oldElement && !!newElement) {
-            const carry = document.createElement("div");
-            while (oldElement.hasChildNodes()) carry.appendChild(oldElement.firstChild!);
-            while (newElement.hasChildNodes()) oldElement.appendChild(newElement.firstChild!);
-            while (carry.hasChildNodes()) newElement.appendChild(carry.firstChild!);
-            oldElement.setAttribute("data-page", newPage.id);
-            oldElement.classList.add("active");
-            newElement.setAttribute("data-page", oldPage.id);
-            newElement.classList.remove("active");
+            deactivate(oldElement);
+            activate(newElement);
         } else {
             // contingency
             const others = document.querySelectorAll("body > [data-page]");
-            if (!!newElement) newElement.classList.add("active");
+            if (!!newElement) activate(newElement);
             for (let i=0; i < others.length; i++) {
                 const el = others.item(i);
                 if (el.getAttribute("data-page") === newPage.id) continue;
-                el.classList.remove("active");
+                deactivate(el as HTMLElement);
             }
         }
     }
@@ -202,6 +264,123 @@ export default class Navigator {
             }
         }
         return Page.null(defaultID);
+    }
+
+}
+
+enum FadeDirection {
+    IN = 0,
+    OUT = 1
+}
+
+class FadeController {
+
+    readonly element: HTMLElement;
+    readonly direction: FadeDirection;
+    readonly speed: number;
+    private _timer: number;
+    private readonly _renderDispatch: RenderDispatch;
+
+    constructor(element: HTMLElement, direction: FadeDirection = FadeDirection.IN, speed: number = 1) {
+        this.element = element;
+        this.direction = direction;
+        this.speed = speed;
+        this._timer = 1;
+        this._renderDispatch = RenderDispatch.create();
+        this.element.style.display = "";
+        this.element.style.opacity = (this.direction) ? "1" : "0";
+
+        const me = this;
+        this._renderDispatch.onRender((delta) => {
+            me._onRender(delta);
+        });
+    }
+
+    private _onRender(delta: number) {
+        this._timer -= (delta * this.speed);
+        if (this._timer <= 0) {
+            this.end();
+            return;
+        }
+        if (this.direction) {
+            this.element.style.opacity = this._timer.toString();
+        } else {
+            this.element.style.opacity = (1 - this._timer).toString();
+        }
+    }
+
+    end() {
+        this._renderDispatch.interrupt();
+        this._onEnd();
+    }
+
+    private _ended: boolean = false;
+    private _onEnd() {
+        if (this._ended) return;
+        this._ended = true;
+
+        if (this.direction) {
+            this.element.style.display = "none";
+        }
+        this.element.style.opacity = (this.direction) ? "0" : "1";
+    }
+
+}
+
+/* Despite the name, does not control transition between 2 pages. This is done while the next page to be shown is still
+    loading, to provide visual feedback to clients that have a slow connection. It also blocks the cursor from clicking
+    anything, preventing a cascade of queued navigations.
+ */
+class TransitionController {
+
+    private _element: HTMLElement | null = null;
+    private _elementInit: boolean = false;
+    private _slowTimeout: number = -1;
+    private _inSlow: boolean = false;
+
+    start() {
+        if (!this._elementInit) {
+            const el = document.createElement("div");
+            el.classList.add("blocker");
+            const img = document.createElement("img");
+            img.src = ConstantData.LOADING_GRID_B64;
+            el.appendChild(img);
+            document.body.appendChild(el);
+
+            this._element = el;
+            this._elementInit = true;
+        }
+        window.clearTimeout(this._slowTimeout);
+        this._element!.classList.remove("slow");
+        this._inSlow = false;
+
+        const me = this;
+        this._slowTimeout = window.setTimeout(() => {
+            me._slow();
+        }, 100);
+    }
+
+    stop() {
+        window.clearTimeout(this._slowTimeout);
+        if (this._elementInit) {
+            const me = this;
+            const finalize = (() => {
+                if (!me._elementInit) return;
+                document.body.removeChild(me._element!);
+                me._elementInit = false;
+            });
+
+            if (this._inSlow) {
+                this._element!.classList.remove("slow");
+                this._slowTimeout = window.setTimeout(finalize, 100);
+            } else {
+                finalize();
+            }
+        }
+    }
+
+    private _slow() {
+        if (this._elementInit) this._element!.classList.add("slow");
     }
 
 }
