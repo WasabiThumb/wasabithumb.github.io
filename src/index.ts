@@ -25,12 +25,19 @@ window.addEventListener("hashchange", () => {
 });
 navigator.checkHash();
 
+type MasterNavigator = Navigator;
+declare global {
+    interface Window {
+        pages: MasterNavigator;
+    }
+}
+window.pages = navigator;
+
 const loader: Loader = window.loader;
 loader.removeToken("bundle-load");
 loader.onLoad(() => {
     console.log(`Loaded Portfolio bundle v${LIB_VERSION}`);
-    // loader.forceLoad();
+    if (LIB_VERSION.indexOf("git") >= 0) loader.forceLoad();
 });
 
-(window as unknown as { keystore: KeyStore })["keystore"] = KeyStore;
 

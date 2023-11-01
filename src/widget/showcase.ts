@@ -18,9 +18,11 @@ import {PageWidget, PageWidgetType} from "../struct/widget";
 import {Page} from "../struct/page";
 import TestShowcaseSlide from "./showcase/test";
 import {LIB_VERSION} from "../util/version";
+import PerformanceShowcaseSlide from "./showcase/performance";
+import PlanetsShowcaseSlide from "./showcase/planets";
 
 const TRANSITION_PERIOD: number = 1;
-const STAY_PERIOD: number = 5; // must be greater than transition time, time in transition counts towards the age of the next slide
+const STAY_PERIOD: number = 8; // must be greater than transition time, time in transition counts towards the age of the next slide
 
 export default class ShowcasePageWidget implements PageWidget {
 
@@ -121,12 +123,14 @@ export default class ShowcasePageWidget implements PageWidget {
 
         this._debugStart();
         this._debugLine("DEBUG");
+        this._debugState.head += 0.25;
         this._debugLine("Slide Age (s): " + age);
         this._debugLine("Slide Mode: " + this._state.type);
         this._debugLine("Slide Class: " + ((this._state.type === "invalid") ? "INVALID" : (this._state as ShowcaseSlideSimpleState).slide.constructor.name));
         this._debugLine("FPS: " + fps.toFixed(2) + " (" + sum.toFixed(2) + " avg)");
         this._debugLine(`Size: ${this.rt.params!.canvas.width} x ${this.rt.params!.canvas.height}`);
         this._debugLine(`Capabilities: ${capabilities}`);
+        this._debugOffscreen();
         this._debugEnd();
     }
 
@@ -155,6 +159,28 @@ export default class ShowcasePageWidget implements PageWidget {
 
         if (this.rt.isValid()) this.rt.params!.ctx.fillText(text, x, y);
         if (this.transitionRt.isValid()) this.transitionRt.params!.ctx.fillText(text, x, y);
+    }
+
+    private _debugOffscreen() {
+        if (!this._debugState.active) return;
+        if (!this.transitionRt.isValid()) return;
+        this._debugLine("Offscreen:");
+
+        const { canvas } = this.transitionRt.params!;
+        const { fontSize } = this._debugState;
+        let x: number = fontSize * 0.5;
+        let y: number = fontSize * (0.5 + this._debugState.head + 0.5);
+        this._debugState.head += 6;
+        let height: number = fontSize * 5;
+        let width: number = (canvas.width / canvas.height) * height;
+
+        const { ctx } = this.rt.params!;
+        const osb = ctx.shadowBlur;
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "white";
+        ctx.fillRect(x, y, width, height);
+        ctx.drawImage(canvas, x + 1, y + 1, width - 2, height - 2);
+        ctx.shadowBlur = osb;
     }
 
     private _debugEnd() {
@@ -188,19 +214,32 @@ type ShowcaseSlideRegistry = { new(): ShowcaseSlide }[];
 
 
 const SLIDES: ShowcaseSlideRegistry = [
-    TestShowcaseSlide
+    TestShowcaseSlide,
+    PerformanceShowcaseSlide,
+    PlanetsShowcaseSlide,
 ];
 
 const randomSlide: (() => ShowcaseSlide) = (() => {
 
     let unused: ShowcaseSlideRegistry = [];
+    let lastUsed: { new(): ShowcaseSlide } | null = null;
+
+    const splice: (() => { new(): ShowcaseSlide }) = (() => {
+        return unused.splice(Math.floor(Math.random() * unused.length), 1)[0];
+    });
 
     return (() => {
         if (unused.length < 1) {
             unused = [...SLIDES];
         }
-        const con = unused.splice(Math.floor(Math.random() * unused.length), 1)[0];
-        return new con();
+        let ret: { new(): ShowcaseSlide } = splice();
+        if (ret === lastUsed) {
+            let retry = splice();
+            unused.push(ret);
+            ret = retry;
+        }
+        lastUsed = ret;
+        return new ret();
     });
 
 })();
@@ -287,10 +326,8 @@ class ShowcaseSlideBasicRenderTarget implements ShowcaseSlideRenderTarget {
         this.params!.canvas.height = rect.height;
         const transition = this.params!.widget.transitionRt;
         if (transition.isValid()) {
-            if (transition instanceof ShowcaseSlideOffscreenRenderTarget) {
-                transition.params!.canvas.width = rect.width;
-                transition.params!.canvas.height = rect.height;
-            }
+            transition.params!.canvas.width = rect.width;
+            transition.params!.canvas.height = rect.height;
         }
     }
 
