@@ -17,6 +17,7 @@
 import {PageWidget, PageWidgetType} from "../struct/widget";
 import {Page} from "../struct/page";
 import TestShowcaseSlide from "./showcase/test";
+import {LIB_VERSION} from "../util/version";
 
 const TRANSITION_PERIOD: number = 1;
 const STAY_PERIOD: number = 5; // must be greater than transition time, time in transition counts towards the age of the next slide
@@ -28,6 +29,7 @@ export default class ShowcasePageWidget implements PageWidget {
     rt: ShowcaseSlideRenderTarget = new ShowcaseSlideBasicRenderTarget();
     transitionRt: ShowcaseSlideRenderTarget = new ShowcaseSlideOffscreenRenderTarget();
     private _state: ShowcaseSlideState = { type: "invalid" };
+    private _debugState: ShowcaseDebugState = { active: false, fontSize: 0, head: 0, fpsLog: [] };
 
 
     init(page: Page) {
@@ -86,6 +88,11 @@ export default class ShowcasePageWidget implements PageWidget {
             this._state = { type: "transition", slide: this._state.slide, to: this.transitionRt.isValid() ? this.transitionRt.spawn() : this.rt.spawn(), age: 0, offset: effAge };
         }
 
+        if (LIB_VERSION.indexOf("git") < 0) {
+            this._state.age += delta;
+            return;
+        }
+        this._debug(delta, this._state.type === "transition" ? `${effAge.toFixed(2)} (${this._state.age.toFixed(2)})` : effAge.toFixed(2));
         this._state.age += delta;
     }
 
@@ -93,6 +100,69 @@ export default class ShowcasePageWidget implements PageWidget {
         this._clearExisting();
         this.rt.destroy();
         this.transitionRt.destroy();
+    }
+
+    private _debug(delta: number, age: string) {
+        const fps = (1 / delta);
+        this._debugState.fpsLog.push(fps);
+        let len: number = this._debugState.fpsLog.length;
+        while (len > 1000) {
+            this._debugState.fpsLog.splice(0, 1);
+            len--;
+        }
+        let sum: number = 0;
+        for (let i=0; i < len; i++) sum += this._debugState.fpsLog[i];
+        sum /= len;
+
+        let capabilities: string[] | string = [];
+        if (this.rt.isValid()) capabilities.push("Canvas");
+        if (this.transitionRt.isValid()) capabilities.push("OffscreenCanvas");
+        capabilities = capabilities.join(", ");
+
+        this._debugStart();
+        this._debugLine("DEBUG");
+        this._debugLine("Slide Age (s): " + age);
+        this._debugLine("Slide Mode: " + this._state.type);
+        this._debugLine("Slide Class: " + ((this._state.type === "invalid") ? "INVALID" : (this._state as ShowcaseSlideSimpleState).slide.constructor.name));
+        this._debugLine("FPS: " + fps.toFixed(2) + " (" + sum.toFixed(2) + " avg)");
+        this._debugLine(`Size: ${this.rt.params!.canvas.width} x ${this.rt.params!.canvas.height}`);
+        this._debugLine(`Capabilities: ${capabilities}`);
+        this._debugEnd();
+    }
+
+    private _debugStart() {
+        if (this._debugState.active) return;
+        const size = Math.min(window.innerWidth, window.innerHeight) * 0.025;
+        this._debugState = { ...this._debugState, active: true, fontSize: size, head: 0 };
+
+        const setupCtx = ((ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) => {
+            ctx.textBaseline = "top";
+            ctx.font = `${size}px Ubuntu Mono`;
+            ctx.fillStyle = "white";
+            ctx.shadowColor = "black";
+            ctx.shadowBlur = (size / 4);
+        });
+
+        if (this.rt.isValid()) setupCtx(this.rt.params!.ctx);
+        if (this.transitionRt.isValid()) setupCtx(this.transitionRt.params!.ctx);
+    }
+
+    private _debugLine(text: string) {
+        if (!this._debugState.active) return;
+        const { fontSize } = this._debugState;
+        let x: number = fontSize * 0.5;
+        let y: number = fontSize * (0.5 + (this._debugState.head++));
+
+        if (this.rt.isValid()) this.rt.params!.ctx.fillText(text, x, y);
+        if (this.transitionRt.isValid()) this.transitionRt.params!.ctx.fillText(text, x, y);
+    }
+
+    private _debugEnd() {
+        if (!this._debugState.active) return;
+        this._debugState.active = false;
+
+        if (this.rt.isValid()) this.rt.params!.ctx.shadowBlur = 0;
+        if (this.transitionRt.isValid()) this.transitionRt.params!.ctx.shadowBlur = 0;
     }
 
 }
@@ -143,9 +213,13 @@ type ShowcaseSlideSimpleState = { readonly type: "simple", slide: ShowcaseSlide,
 
 type ShowcaseSlideTransitionState = { readonly type: "transition", slide: ShowcaseSlide, to: ShowcaseSlide, age: number, offset: number };
 
+type ShowcaseDebugState = { active: boolean, fontSize: number, head: number, fpsLog: number[] };
+
 
 
 interface ShowcaseSlideRenderTarget {
+
+    params: ShowcaseSlideParameters | null;
 
     init(widget: ShowcasePageWidget, page: Page): void;
 

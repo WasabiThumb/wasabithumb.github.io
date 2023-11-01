@@ -17,11 +17,6 @@ export default class TestShowcaseSlide implements ShowcaseSlide {
     render(param: ShowcaseSlideParameters, delta: number, age: number) {
         param.ctx.fillStyle = this._col;
         param.ctx.fillRect(0, 0, param.canvas.width, param.canvas.height);
-
-        param.ctx.fillStyle = "black";
-        param.ctx.textBaseline = "top";
-        param.ctx.font = `${Math.min(param.canvas.width, param.canvas.height) * 0.05}px Ubuntu Mono`;
-        param.ctx.fillText(age.toFixed(2), 50, 50);
     }
 
     destroy() {
