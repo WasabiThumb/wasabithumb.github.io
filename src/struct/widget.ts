@@ -16,8 +16,9 @@
 
 import { Page } from "./page";
 import ShowcasePageWidget from "../widget/showcase";
+import ConstantsPageWidget from "../widget/constants";
 
-export type PageWidgetType = "main-showcase";
+export type PageWidgetType = "main-showcase" | "constants";
 
 export interface PageWidget {
 
@@ -35,21 +36,6 @@ export interface PageWidget {
 
 }
 
-export abstract class PageWidgetAdapter implements PageWidget {
-
-    abstract readonly type: PageWidgetType;
-    readonly renders: boolean = false;
-
-    init(page: Page) { }
-
-    refresh(page: Page) { }
-
-    render(page: Page, delta: number) { }
-
-    destroy(page: Page) { }
-
-}
-
 export type PageWidgetRef = PageWidget | PageWidgetType;
 
 type PageWidgetImplClass = { new(): PageWidget };
@@ -61,7 +47,8 @@ export class PageWidgets {
 
     static registerDefaults() {
         this.register(
-            ShowcasePageWidget
+            ShowcasePageWidget,
+            ConstantsPageWidget,
         );
         this.INIT_DEFAULTS = true;
     }

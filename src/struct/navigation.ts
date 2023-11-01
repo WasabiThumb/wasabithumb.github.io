@@ -359,7 +359,7 @@ class TransitionController {
             const el = document.createElement("div");
             el.classList.add("blocker");
             const img = document.createElement("img");
-            img.src = ConstantData.LOADING_GRID_B64;
+            img.src = ConstantData.LOADING_GRID_SVG;
             el.appendChild(img);
             document.body.appendChild(el);
 
