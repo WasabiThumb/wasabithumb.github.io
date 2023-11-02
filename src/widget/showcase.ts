@@ -20,6 +20,7 @@ import TestShowcaseSlide from "./showcase/test";
 import {LIB_VERSION} from "../util/version";
 import PerformanceShowcaseSlide from "./showcase/performance";
 import PlanetsShowcaseSlide from "./showcase/planets";
+import MazeShowcaseSlide from "./showcase/maze";
 
 const TRANSITION_PERIOD: number = 1;
 const STAY_PERIOD: number = 8; // must be greater than transition time, time in transition counts towards the age of the next slide
@@ -29,13 +30,13 @@ export default class ShowcasePageWidget implements PageWidget {
     readonly type: PageWidgetType = "main-showcase";
     readonly renders: boolean = true;
     rt: ShowcaseSlideRenderTarget = new ShowcaseSlideBasicRenderTarget();
-    transitionRt: ShowcaseSlideRenderTarget = new ShowcaseSlideOffscreenRenderTarget();
+    offscreenRt: ShowcaseSlideRenderTarget = new ShowcaseSlideOffscreenRenderTarget();
     private _state: ShowcaseSlideState = { type: "invalid" };
     private _debugState: ShowcaseDebugState = { active: false, fontSize: 0, head: 0, fpsLog: [] };
 
 
     init(page: Page) {
-        this.transitionRt.init(this, page);
+        this.offscreenRt.init(this, page);
         this.rt.init(this, page);
         this._reset();
     }
@@ -66,11 +67,14 @@ export default class ShowcasePageWidget implements PageWidget {
     render(page: Page, delta: number) {
         if (this._state.type === "invalid") return;
         if (!this.rt.isValid()) return;
+        const offValid: boolean = this.offscreenRt.isValid();
 
         let offset: number = 0;
         if (this._state.type === "transition") offset = this._state.offset;
         let effAge: number = this._state.age + offset;
+        if (offValid) this.offscreenRt.params!.ctx.save();
         this.rt.render(this._state.slide, delta, effAge);
+        if (offValid) this.offscreenRt.params!.ctx.restore();
 
         if (this._state.type === "transition") {
             let prog: number = this._state.age / TRANSITION_PERIOD;
@@ -79,15 +83,16 @@ export default class ShowcasePageWidget implements PageWidget {
                 prog = 1;
                 advance = true;
             }
-            if (this.transitionRt.isValid()) {
-                this.transitionRt.render(this._state.to, delta, this._state.age);
-                this.rt.blit(this.transitionRt.getOutput(), prog);
+            if (offValid) {
+                this.offscreenRt.render(this._state.to, delta, this._state.age);
+                this.rt.blit(this.offscreenRt.getOutput(), prog);
             }
             if (advance) {
+                this._state.slide.destroy();
                 this._state = { type: "simple", slide: this._state.to, age: this._state.age };
             }
         } else if (effAge >= STAY_PERIOD) {
-            this._state = { type: "transition", slide: this._state.slide, to: this.transitionRt.isValid() ? this.transitionRt.spawn() : this.rt.spawn(), age: 0, offset: effAge };
+            this._state = { type: "transition", slide: this._state.slide, to: this.offscreenRt.isValid() ? this.offscreenRt.spawn() : this.rt.spawn(), age: 0, offset: effAge };
         }
 
         if (LIB_VERSION.indexOf("git") < 0) {
@@ -101,7 +106,7 @@ export default class ShowcasePageWidget implements PageWidget {
     destroy(page: Page) {
         this._clearExisting();
         this.rt.destroy();
-        this.transitionRt.destroy();
+        this.offscreenRt.destroy();
     }
 
     private _debug(delta: number, age: string) {
@@ -118,7 +123,7 @@ export default class ShowcasePageWidget implements PageWidget {
 
         let capabilities: string[] | string = [];
         if (this.rt.isValid()) capabilities.push("Canvas");
-        if (this.transitionRt.isValid()) capabilities.push("OffscreenCanvas");
+        if (this.offscreenRt.isValid()) capabilities.push("OffscreenCanvas");
         capabilities = capabilities.join(", ");
 
         this._debugStart();
@@ -148,7 +153,7 @@ export default class ShowcasePageWidget implements PageWidget {
         });
 
         if (this.rt.isValid()) setupCtx(this.rt.params!.ctx);
-        if (this.transitionRt.isValid()) setupCtx(this.transitionRt.params!.ctx);
+        if (this.offscreenRt.isValid()) setupCtx(this.offscreenRt.params!.ctx);
     }
 
     private _debugLine(text: string) {
@@ -158,15 +163,15 @@ export default class ShowcasePageWidget implements PageWidget {
         let y: number = fontSize * (0.5 + (this._debugState.head++));
 
         if (this.rt.isValid()) this.rt.params!.ctx.fillText(text, x, y);
-        if (this.transitionRt.isValid()) this.transitionRt.params!.ctx.fillText(text, x, y);
+        if (this.offscreenRt.isValid()) this.offscreenRt.params!.ctx.fillText(text, x, y);
     }
 
     private _debugOffscreen() {
         if (!this._debugState.active) return;
-        if (!this.transitionRt.isValid()) return;
+        if (!this.offscreenRt.isValid()) return;
         this._debugLine("Offscreen:");
 
-        const { canvas } = this.transitionRt.params!;
+        const { canvas } = this.offscreenRt.params!;
         const { fontSize } = this._debugState;
         let x: number = fontSize * 0.5;
         let y: number = fontSize * (0.5 + this._debugState.head + 0.5);
@@ -188,7 +193,7 @@ export default class ShowcasePageWidget implements PageWidget {
         this._debugState.active = false;
 
         if (this.rt.isValid()) this.rt.params!.ctx.shadowBlur = 0;
-        if (this.transitionRt.isValid()) this.transitionRt.params!.ctx.shadowBlur = 0;
+        if (this.offscreenRt.isValid()) this.offscreenRt.params!.ctx.shadowBlur = 0;
     }
 
 }
@@ -214,9 +219,8 @@ type ShowcaseSlideRegistry = { new(): ShowcaseSlide }[];
 
 
 const SLIDES: ShowcaseSlideRegistry = [
-    TestShowcaseSlide,
-    PerformanceShowcaseSlide,
     PlanetsShowcaseSlide,
+    MazeShowcaseSlide,
 ];
 
 const randomSlide: (() => ShowcaseSlide) = (() => {
@@ -324,7 +328,7 @@ class ShowcaseSlideBasicRenderTarget implements ShowcaseSlideRenderTarget {
         if (!this._valid) return;
         this.params!.canvas.width = rect.width;
         this.params!.canvas.height = rect.height;
-        const transition = this.params!.widget.transitionRt;
+        const transition = this.params!.widget.offscreenRt;
         if (transition.isValid()) {
             transition.params!.canvas.width = rect.width;
             transition.params!.canvas.height = rect.height;
@@ -336,7 +340,9 @@ class ShowcaseSlideBasicRenderTarget implements ShowcaseSlideRenderTarget {
     }
 
     render(slide: ShowcaseSlide, delta: number, age: number): void {
+        this.params!.ctx.save();
         slide.render(this.params!, delta, age);
+        this.params!.ctx.restore();
     }
 
     blit(image: OffscreenCanvas, opacity: number) {
@@ -386,7 +392,9 @@ class ShowcaseSlideOffscreenRenderTarget implements ShowcaseSlideRenderTarget {
     }
 
     render(slide: ShowcaseSlide, delta: number, age: number): void {
+        this.params!.ctx.save();
         slide.render(this.params!, delta, age);
+        this.params!.ctx.restore();
     }
 
     blit(image: OffscreenCanvas, opacity: number) { }

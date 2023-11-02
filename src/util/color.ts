@@ -7,6 +7,10 @@ export namespace RGB {
         return [ 255, 255, 255 ];
     }
 
+    export function black(): RGB {
+        return [ 0, 0, 0 ];
+    }
+
     export function fromInt(int: number): RGB {
         return [ (int >> 16) & 0xff, (int >> 8) & 0xff, int & 0xff ];
     }
