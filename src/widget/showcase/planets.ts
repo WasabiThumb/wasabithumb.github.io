@@ -16,6 +16,7 @@
 
 import {ShowcaseSlide, ShowcaseSlideParameters} from "../showcase";
 import {HSV, RGB} from "../../util/color";
+import {CursorTracker} from "../../util/input";
 
 const CAM_DISTANCE: number = 300;
 
@@ -29,7 +30,7 @@ export default class PlanetsShowcaseSlide implements ShowcaseSlide {
     private _cursor: CursorTracker | null = null;
 
     init(param: ShowcaseSlideParameters): void {
-        this._cursor = new CursorTracker();
+        this._cursor = new CursorTracker(window.innerWidth / 2, window.innerHeight * 0.8);
         this._planets.push(new Planet(0, 6, 0, 0, [ 255, 255, 0 ]));
         let head: number = 10;
         for (let i=0; i < 5 + Math.floor(Math.random() * 6); i++) {
@@ -107,8 +108,8 @@ export default class PlanetsShowcaseSlide implements ShowcaseSlide {
     }
 
     private _updateCursorVars(cursor: CursorTracker) {
-        this._offsetTarget = cursor.getX() * Math.PI * 2;
-        this._perspectiveFactor = (cursor.getY() * 2) - 1;
+        this._offsetTarget = (cursor.getX() / window.innerWidth) * Math.PI * 2;
+        this._perspectiveFactor = ((cursor.getY() / window.innerHeight) * 2) - 1;
     }
 
     destroy(): void {
@@ -159,54 +160,6 @@ class Planet {
 
     getScaledSize(z: number): number {
         return this.size * (CAM_DISTANCE / Math.abs(CAM_DISTANCE + z));
-    }
-
-}
-
-type CursorTrackerCallback = ((event: MouseEvent) => void);
-type CursorTrackerMode = { id: "controller", controller: AbortController } | { id: "callback", callback: CursorTrackerCallback } | { id: "done" };
-class CursorTracker {
-
-    private _mode: CursorTrackerMode;
-    private _x: number = 0.5;
-    private _y: number = 0.85;
-    constructor() {
-        const me = this;
-        const cb: CursorTrackerCallback = ((event) => me._onMouseMove(event));
-
-        if (typeof AbortController === "function") {
-            const con: AbortController = new AbortController();
-            window.addEventListener("mousemove", cb, { signal: con.signal });
-            this._mode = { id: "controller", controller: con };
-        } else {
-            window.addEventListener("mousemove", cb);
-            this._mode = { id: "callback", callback: cb };
-        }
-    }
-
-    private _onMouseMove(event: MouseEvent) {
-        this._x = event.clientX / window.innerWidth;
-        this._y = event.clientY / window.innerHeight;
-    }
-
-    getX(): number {
-        return this._x;
-    }
-
-    getY(): number {
-        return this._y;
-    }
-
-    stop(): void {
-        switch (this._mode.id) {
-            case "callback":
-                window.removeEventListener("mousemove", this._mode.callback);
-                break;
-            case "controller":
-                this._mode.controller.abort();
-                break;
-        }
-        this._mode = { id: "done" };
     }
 
 }

@@ -151,14 +151,17 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         const mapX: number = (canvas.width - mapSize) / 2;
         const mapY: number = trim * 2;
 
+        ctx.save();
         ctx.fillStyle = "black";
         ctx.strokeStyle = "white";
         ctx.lineWidth = 1;
         ctx.fillRect(mapX - trim, mapY - trim, mapSize + (trim * 2), mapSize + (trim * 2));
-        const tform = ctx.getTransform();
+        ctx.beginPath()
+        ctx.rect(mapX - (trim * 0.5), mapY - (trim * 0.5), mapSize + trim, mapSize + trim);
+        ctx.clip();
         ctx.setTransform(1, 0, 0, 1, mapX, mapY);
         this._renderMap(ctx, mapSize);
-        ctx.setTransform(tform);
+        ctx.restore();
     }
 
     private _updateCamera(delta: number) {
@@ -247,7 +250,7 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, size, size);
 
-        this._ceilingScroll = (this._ceilingScroll + delta * 0.135) % 1;
+        this._ceilingScroll = (this._ceilingScroll + delta * 0.125) % 1;
         let hScroll: number = mod(-this._eyeAngles, Math.PI) / Math.PI;
         if (this._ceilingImage.isAvailable()) {
             const img = this._ceilingImage.get();
@@ -263,7 +266,7 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
             }
 
             ctx.globalCompositeOperation = "multiply";
-            this._ceilingImageAlpha = Math.min(this._ceilingImageAlpha + delta, 1);
+            this._ceilingImageAlpha = Math.min(this._ceilingImageAlpha + delta * 1.5, 1);
             ctx.globalAlpha = this._ceilingImageAlpha;
             for (let y=0; y < size; y++) {
                 let scroll: number = (y < size / 2) ? this._ceilingScroll : (1 - this._ceilingScroll);
@@ -279,7 +282,7 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
 
         this._generateTraceParams();
         if (this._wallImage.isAvailable()) {
-            this._wallImageAlpha = Math.min(this._wallImageAlpha + delta, 1);
+            this._wallImageAlpha = Math.min(this._wallImageAlpha + delta * 1.5, 1);
         }
         for (let x=0; x < size; x++) {
             const dat = this._trace(x, size);
@@ -364,10 +367,10 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         const my: number = scale * this._eyePos.y;
 
         const FOV = Math.atan((0.5 * CAM_SIZE) / Z_NEAR);
-        const [ lcx, lcy ] = [ scale * 2 * Math.cos(this._eyeAngles - FOV), scale * 2 * Math.sin(this._eyeAngles - FOV) ];
-        const [ rcx, rcy ] = [ scale * 2 * Math.cos(this._eyeAngles + FOV), scale * 2 * Math.sin(this._eyeAngles + FOV) ];
+        const [ lcx, lcy ] = [ scale * 4 * Math.cos(this._eyeAngles - FOV), scale * 4 * Math.sin(this._eyeAngles - FOV) ];
+        const [ rcx, rcy ] = [ scale * 4 * Math.cos(this._eyeAngles + FOV), scale * 4 * Math.sin(this._eyeAngles + FOV) ];
         const grad = ctx.createLinearGradient(mx, my, mx + (lcx + rcx) / 2, my + (lcy + rcy) / 2);
-        grad.addColorStop(0, "rgba(0, 255, 0, 0.8)");
+        grad.addColorStop(0, "rgba(0, 255, 0, 0.6)");
         grad.addColorStop(1, "rgba(0, 255, 0, 0.2)");
         ctx.fillStyle = grad;
 
@@ -378,7 +381,7 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         ctx.closePath();
         ctx.fill();
 
-        ctx.fillStyle = "green";
+        ctx.fillStyle = "#00ff00";
         ctx.beginPath();
         ctx.arc(mx, my, scale * 0.25, 0, Math.PI * 2);
         ctx.fill();

@@ -161,6 +161,19 @@ export class Vector2 extends Vector {
         return new Vector2(Math.cos(angle) * magnitude, Math.sin(angle) * magnitude);
     }
 
+    static xyLerp(a: Vector2, b: Vector2, d: Vector2): Vector2 {
+        let { x, y } = d;
+        x = Math.min(Math.max(x, 0), 1);
+        let nx: number = 1 - x;
+        y = Math.min(Math.max(y, 0), 1);
+        let ny: number = 1 - y;
+
+        return new Vector2(
+            (nx * a.x) + (x * b.x),
+            (ny * a.y) + (y * b.y)
+        );
+    }
+
     readonly dimensions: number = 2;
     constructor(x?: number, y?: number) {
         super();
