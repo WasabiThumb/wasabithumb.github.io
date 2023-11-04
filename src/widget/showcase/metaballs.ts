@@ -1,3 +1,19 @@
+/*
+   Copyright 2023 WasabiThumb
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 import {Vector, Vector2} from "../../math/vector";
 import {ShowcaseSlide, ShowcaseSlideParameters} from "../showcase";
 import {CursorTracker} from "../../util/input";
@@ -43,7 +59,7 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
     private _cursor: CursorTracker | null = null;
     private _ballColor: RGB = RGB.black();
     private _bgColor: RGB = RGB.black();
-    private _transitionProgress: number = -8;
+    private _transitionProgress: number = -6;
 
     init(param: ShowcaseSlideParameters): void {
         const hue = Math.random();
@@ -61,9 +77,11 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
             this._balls.push({ id: i, pos, velocity: new Vector2(-cos * 2.5 * velMag, -sin * 2.5 * velMag), radius: 0.15 + (0.4 * Math.random()) });
         }
         this._cursor = new CursorTracker();
-        this._transitionProgress = -8;
+        this._transitionProgress = -6;
+        this._stroking = false;
     }
 
+    private _stroking: boolean = false;
     render(param: ShowcaseSlideParameters, delta: number, age: number): void {
         const { canvas, ctx } = param;
         const { width, height } = canvas;
@@ -85,19 +103,22 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
         }
         this._simulationStep(delta);
 
-        const bg = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height, Math.SQRT2 / 2 * dim);
+        const bg = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.SQRT2 / 2 * dim);
         bg.addColorStop(0, RGB.toCSS(RGB.lerp(this._bgColor, RGB.black(), 0.9)));
         bg.addColorStop(1, "black");
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, width, height);
 
-        const fg = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height, Math.SQRT2 / 2 * dim);
+        const fg = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.SQRT2 / 2 * dim);
         fg.addColorStop(0, RGB.toCSS(this._ballColor));
-        fg.addColorStop(1, RGB.toCSS(RGB.lerp(this._ballColor, RGB.black(), 0.8)));
+        fg.addColorStop(1, RGB.toCSS(RGB.lerp(this._ballColor, RGB.black(), 0.9)));
         ctx.fillStyle = fg;
 
         if (this._transitionProgress >= 0 && this._transitionProgress <= 1) {
             ctx.globalAlpha = 4 * Math.pow(this._transitionProgress - 0.5, 2);
+        } else if (this._transitionProgress >= 6) {
+            this._stroking = true;
+            ctx.strokeStyle = `rgba(0,0,0,${Math.min(this._transitionProgress - 6, 1)})`;
         }
 
         this._evalCache = {};
@@ -121,6 +142,7 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
                     ctx.lineTo(ax, bottom);
                     ctx.closePath();
                     ctx.fill();
+                    if (this._stroking) ctx.stroke();
                 }
                 stripeStart = -1;
             });
@@ -179,6 +201,7 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
         }
         ctx.closePath();
         ctx.fill();
+        if (this._stroking) ctx.stroke();
 
         return false;
     }

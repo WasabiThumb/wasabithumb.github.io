@@ -108,8 +108,9 @@ export default class PlanetsShowcaseSlide implements ShowcaseSlide {
     }
 
     private _updateCursorVars(cursor: CursorTracker) {
+        if (cursor.lastEventAgeMillis() > 500) return;
         this._offsetTarget = (cursor.getX() / window.innerWidth) * Math.PI * 2;
-        this._perspectiveFactor = ((cursor.getY() / window.innerHeight) * 2) - 1;
+        this._perspectiveFactorTarget = ((cursor.getY() / window.innerHeight) * 2) - 1;
     }
 
     destroy(): void {
