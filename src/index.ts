@@ -29,9 +29,11 @@ type MasterNavigator = Navigator;
 declare global {
     interface Window {
         pages: MasterNavigator;
+        keystore: KeyStore;
     }
 }
 window.pages = navigator;
+window.keystore = KeyStore;
 
 const loader: Loader = window.loader;
 loader.removeToken("bundle-load");

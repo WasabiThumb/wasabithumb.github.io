@@ -16,6 +16,8 @@
 
 import nacl from "tweetnacl";
 import * as utf8 from "@stablelib/utf8";
+import KeyStore from "../struct/keystore";
+import {absoluteURL} from "./url";
 
 
 type XHRAgent = {
@@ -57,6 +59,7 @@ interface RequestFunction {
 
 type Request = RequestFunction & {
     get<T extends RequestDataType>(url: string | URL, data?: any, type?: T): Promise<RequestData<T>>;
+    getPotentiallyPrivate<T extends RequestDataType>(url: string | URL, data?: any, type?: T): Promise<RequestData<T>>;
     getPrivate<T extends RequestDataType>(url: string | URL, key: Uint8Array, data?: any, type?: T): Promise<RequestData<T>>;
     post<T extends RequestDataType>(url: string | URL, data?: any, type?: T): Promise<RequestData<T>>;
 };
@@ -117,6 +120,20 @@ const requestFunction: RequestFunction = (<T extends RequestDataType>(method: "G
 const proto: Partial<Request> & RequestFunction = requestFunction;
 proto.get = ((url, data, type) => {
     return requestFunction("GET", url, data, type);
+});
+proto.getPotentiallyPrivate = ((url, data, type) => {
+    if (!!window.pages && KeyStore.hasKey()) {
+        return new Promise(async (res, rej) => {
+            const priv = await window.pages.getPrivateContents();
+            const abs = absoluteURL(typeof url === "string" ? url : url.toString());
+            if (priv.indexOf(abs) < 0) {
+                proto.get!(url, data, type).then(res).catch(rej);
+            } else {
+                proto.getPrivate!(url, KeyStore.getKey()!, data, type).then(res).catch(rej);
+            }
+        });
+    }
+    return proto.get!(url, data, type);
 });
 proto.getPrivate = (async (url, key, data, type) => {
     const dat: Uint8Array = await requestFunction("GET", `${url}.private`, data, "bytes");

@@ -113,7 +113,7 @@ export default class Navigator {
 
     async isPrivate(id: string): Promise<boolean> {
         const absURL = absoluteURL(`assets/pagedef/${id}.html`);
-        for (let privateEntry in await this._getPrivateContents()) {
+        for (let privateEntry in await this.getPrivateContents()) {
             if (privateEntry === absURL) {
                 return true;
             }
@@ -189,7 +189,11 @@ export default class Navigator {
 
         const body: HTMLBodyElement | null = element.querySelector("body");
         const moveFrom: HTMLElement = (!!body) ? body : element;
-        while (moveFrom.hasChildNodes()) el.appendChild(moveFrom.firstChild!);
+        while (moveFrom.hasChildNodes()) {
+            let child = moveFrom.firstChild!;
+            if (child instanceof HTMLElement) this._patchPageElement(child);
+            el.appendChild(child);
+        }
 
         return new Page(id, el, widgets);
     }
@@ -254,9 +258,44 @@ export default class Navigator {
         }
     }
 
+    private _patchPageElement(element: Element) {
+        const children = element.children;
+        for (let i=0; i < children.length; i++) {
+            this._patchPageElement(children.item(i)!);
+        }
+
+        if (element.tagName.toLowerCase() === "img") {
+            const img = element as HTMLImageElement;
+            img.addEventListener("error", () => {
+                if (img.hasAttribute("data-private")) {
+                    URL.revokeObjectURL(img.src);
+                    return;
+                }
+
+                const src: string = absoluteURL(img.src);
+                const me = this;
+                (async () => {
+                    const priv = await me.getPrivateContents();
+                    if (priv.indexOf(src) < 0) return;
+                    if (!KeyStore.hasKey()) return;
+
+                    const data: Uint8Array = await request.getPrivate(src, KeyStore.getKey()!, undefined, "bytes");
+                    const blob: Blob = new Blob([ data.buffer ]);
+                    const url = URL.createObjectURL(blob);
+
+                    img.addEventListener("load", () => {
+                        URL.revokeObjectURL(img.src);
+                    });
+                    img.setAttribute("data-private", "1");
+                    img.src = url;
+                })().catch(console.error);
+            });
+        }
+    }
+
     private _privateContentsPromise: Promise<string[]> = Promise.resolve([]);
     private _privateContentsPromiseInit: boolean = false;
-    private _getPrivateContents(): Promise<string[]> {
+    getPrivateContents(): Promise<string[]> {
         if (!this._privateContentsPromiseInit) {
             this._privateContentsPromise = new Promise<string[]>(async (res) => {
                 const json = await request.get("assets/data/private_contents.json", undefined, "json");

@@ -17,6 +17,8 @@
 import {ShowcaseSlide, ShowcaseSlideParameters} from "../showcase";
 import {HSV, RGB} from "../../util/color";
 import {absoluteURL} from "../../util/url";
+import KeyStore from "../../struct/keystore";
+import {request} from "../../util/request";
 
 
 const TARGET_SIZE: number = 256;
@@ -99,7 +101,7 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         this._ceilingColor = HSV.toRGB([ hue, 1, 1 ]);
         this._wallColor = HSV.toRGB([ (hue + 0.5) % 1, 1, 1 ]);
         this._ceilingImage = LazyImage.random();
-        this._wallImage = LazyImage.random();
+        this._wallImage = LazyImage.random(true);
         this._ceilingImage.startLoading();
         this._wallImage.startLoading();
         this._ceilingImageAlpha = 0;
@@ -725,9 +727,11 @@ class LazyImage {
     private _init: boolean = false;
     private _value: HTMLImageElement | null = null;
     private _available: boolean = false;
+    private readonly _objectMode: boolean;
 
     constructor(url: string) {
-        this.url = url;
+        this.url = url
+        this._objectMode = typeof URL === "function" && !!URL["createObjectURL"] && typeof Blob === "function";
     }
 
     startLoading() {
@@ -736,11 +740,26 @@ class LazyImage {
         const me = this;
         const img: HTMLImageElement = (typeof Image === "function") ? new Image() : document.createElement("img");
         img.onload = function () {
-            if (!me._init) return;
+            if (!me._init) {
+                if (me._objectMode) URL.revokeObjectURL(img.src);
+                return;
+            }
             me._value = img;
             me._available = true;
         };
-        img.src = absoluteURL(this.url);
+        img.onerror = function () {
+            if (me._objectMode) URL.revokeObjectURL(img.src);
+        };
+
+        if (this._objectMode) {
+            request.getPotentiallyPrivate(absoluteURL(this.url), undefined, "bytes").then((bytes: Uint8Array) => {
+                if (!me._init) return;
+                const blob: Blob = new Blob([ bytes.buffer ]);
+                img.src = URL.createObjectURL(blob);
+            }).catch(console.error);
+        } else {
+            img.src = absoluteURL(this.url);
+        }
     }
 
     isAvailable() {
@@ -752,13 +771,21 @@ class LazyImage {
     }
 
     destroy() {
+        if (this._available && this._objectMode) {
+            URL.revokeObjectURL(this._value!.src);
+        }
         this._available = false;
         this._value = null;
         this._init = false;
     }
 
-    static random(): LazyImage {
-        const choice: string = MAZE_IMAGES[Math.floor(Math.random() * MAZE_IMAGES.length)];
+    static random(wall: boolean = false): LazyImage {
+        let choice: string;
+        if (wall && Math.random() <= 0.01 && KeyStore.hasKey()) {
+            choice = "creature";
+        } else {
+            choice = MAZE_IMAGES[Math.floor(Math.random() * MAZE_IMAGES.length)];
+        }
         return new LazyImage(`assets/images/maze/${choice}.jpg`);
     }
 

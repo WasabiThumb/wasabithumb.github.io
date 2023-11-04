@@ -54,11 +54,12 @@ const checkNotChanged = ((data, dest) => {
 
         head = 0;
         while (true) {
-            const rem = storedBox.length - head;
+            let rem = storedBox.length - head;
             if (rem < 1) {
                 const newBox = new Uint8Array(storedBox.length * 2);
                 newBox.set(storedBox);
                 storedBox = newBox;
+                rem = storedBox.length - head;
             }
             read = fs.readSync(handle, storedBox, head, rem, head + nonceLength);
             if (read < 1) break;
