@@ -7,7 +7,9 @@ const TARGET_SIZE: number = 256;
 const MAZE_SIZE: number = 9;
 const Z_FAR: number = 13;
 const Z_NEAR: number = 0.25;
-const FOV: number = Math.PI / 2.8;
+const Z_NEAR_SQR: number = Z_NEAR * Z_NEAR;
+const CAM_SIZE: number = 0.5;
+const WALL_HEIGHT: number = 1.5;
 
 export default class MazeShowcaseSlide implements ShowcaseSlide {
 
@@ -71,7 +73,6 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
                 }
             }
         }
-        for (let i=0; i < this._matrix.length; i++) console.log(this._matrix[i]);
 
         const center = Math.floor(MAZE_SIZE / 2) + 0.5;
         this._eyePos = this._movePosEnd = [ center, center ];
@@ -140,7 +141,7 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
     }
 
     private _updateCamera(delta: number) {
-        this._moveProgress += delta * 1.4;
+        this._moveProgress += delta * 1.6;
 
         const d: number = this._moveProgress;
         if (d >= 1) {
@@ -245,6 +246,7 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
             ctx.globalCompositeOperation = "source-over";
         }
 
+        this._generateTraceParams();
         if (this._wallImage.isAvailable()) {
             this._wallImageAlpha = Math.min(this._wallImageAlpha + delta, 1);
         }
@@ -269,50 +271,70 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         }
     }
 
-    private _trace(x: number, resolution: number): ColumnData {
-        const angle: number = ((x / (resolution - 1)) - 0.5) * FOV;
-        const shift: number = Z_NEAR * Math.tan(angle);
-        const totalAng: number = this._eyeAngles + angle;
-        const origin: Point = [
-            this._eyePos[0] + (Math.cos(totalAng + (Math.PI / 2)) * shift),
-            this._eyePos[1] + (Math.sin(totalAng + (Math.PI / 2)) * shift)
-        ]
-        const eyeLine = new Line(origin, [
-            origin[0] + (Z_FAR * Math.cos(totalAng)),
-            origin[1] + (Z_FAR * Math.sin(totalAng))
-        ]);
-        return this._trace0(origin, eyeLine, resolution);
+    private _traceParams: { forward: Point, right: Point, camOrigin: Point } = { forward: [1,0], right: [0,-1], camOrigin: [0,0] };
+    private _generateTraceParams() {
+        const forward: Point = [
+            Math.cos(this._eyeAngles),
+            Math.sin(this._eyeAngles)
+        ];
+
+        const right: Point = [
+            forward[1],
+            -forward[0]
+        ];
+
+        const camOrigin: Point = [
+            this._eyePos[0] - (forward[0] * Z_NEAR),
+            this._eyePos[1] - (forward[1] * Z_NEAR)
+        ];
+
+        this._traceParams = { forward, right, camOrigin };
     }
 
-    private _trace0(origin: Point, eyeLine: Line, resolution: number): ColumnData {
+    private _trace(x: number, resolution: number): ColumnData {
+        const { right, camOrigin } = this._traceParams;
+
+        const d: number = (x / (resolution - 1)) - 0.5;
+        const rayOrigin: Point = [
+            this._eyePos[0] + (right[0] * CAM_SIZE * d),
+            this._eyePos[1] + (right[1] * CAM_SIZE * d)
+        ];
+
+        const rayNormal: Point = [
+            rayOrigin[0] - camOrigin[0],
+            rayOrigin[1] - camOrigin[1]
+        ];
+        const distInCam: number = Math.sqrt(Math.pow(rayNormal[0], 2) + Math.pow(rayNormal[1], 2));
+        rayNormal[0] /= distInCam;
+        rayNormal[1] /= distInCam;
+
+        const ray: Line = new Line(
+            rayOrigin,
+            [ rayOrigin[0] + rayNormal[0] * Z_FAR, rayOrigin[1] + rayNormal[1] * Z_FAR ]
+        );
+
         const max: number = Z_FAR * Z_FAR;
         let dist: number = max;
         let u: number = 0;
         let candidate: Point | null;
         for (let wall of this._walls) {
-            candidate = eyeLine.intersection(wall);
+            candidate = ray.intersection(wall);
             if (candidate === null) continue;
             let cu: number = wall.getProgressAlong(candidate);
-            let d = Math.pow(candidate[0] - origin[0], 2) + Math.pow(candidate[1] - origin[1], 2);
-            if (d <= 0.25) return { valid: true, textureLoc: cu, height: resolution, light: 1 };
+            let d = Math.pow(candidate[0] - rayOrigin[0], 2) + Math.pow(candidate[1] - rayOrigin[1], 2);
+            if (d <= Z_NEAR_SQR) return { valid: true, textureLoc: cu, height: resolution, light: 1 };
             if (d < dist) {
                 dist = d;
                 u = cu;
             }
         }
         if (dist >= max) return { valid: false };
-
         dist = Math.sqrt(dist);
-        let height: number;
-        let light: number = 1;
-        if (dist <= 0.5) {
-            height = resolution;
-        } else {
-            height = (0.5 * resolution) / dist;
-            light /= (dist * 2);
-        }
 
-        return { valid: true, textureLoc: u, height: height, light };
+        const slope: number = WALL_HEIGHT / (dist + distInCam);
+        const height: number = slope * distInCam * resolution;
+
+        return { valid: true, textureLoc: u, height, light: Math.min(1 / (dist * 2), 1) };
     }
 
     private _renderMap(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, size: number) {
@@ -329,8 +351,9 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         const mx: number = scale * this._eyePos[0];
         const my: number = scale * this._eyePos[1];
 
-        const [ lcx, lcy ] = [ scale * 2 * Math.cos(this._eyeAngles - (FOV / 2)), scale * 2 * Math.sin(this._eyeAngles - (FOV / 2)) ];
-        const [ rcx, rcy ] = [ scale * 2 * Math.cos(this._eyeAngles + (FOV / 2)), scale * 2 * Math.sin(this._eyeAngles + (FOV / 2)) ];
+        const FOV = Math.atan((0.5 * CAM_SIZE) / Z_NEAR);
+        const [ lcx, lcy ] = [ scale * 2 * Math.cos(this._eyeAngles - FOV), scale * 2 * Math.sin(this._eyeAngles - FOV) ];
+        const [ rcx, rcy ] = [ scale * 2 * Math.cos(this._eyeAngles + FOV), scale * 2 * Math.sin(this._eyeAngles + FOV) ];
         const grad = ctx.createLinearGradient(mx, my, mx + (lcx + rcx) / 2, my + (lcy + rcy) / 2);
         grad.addColorStop(0, "rgba(0, 255, 0, 0.8)");
         grad.addColorStop(1, "rgba(0, 255, 0, 0.2)");
