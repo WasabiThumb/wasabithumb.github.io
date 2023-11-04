@@ -113,7 +113,9 @@ export default class Navigator {
 
     async isPrivate(id: string): Promise<boolean> {
         const absURL = absoluteURL(`assets/pagedef/${id}.html`);
-        for (let privateEntry in await this.getPrivateContents()) {
+        console.log(absURL);
+        for (let privateEntry of await this.getPrivateContents()) {
+            console.log(privateEntry);
             if (privateEntry === absURL) {
                 return true;
             }

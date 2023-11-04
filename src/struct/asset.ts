@@ -18,6 +18,7 @@ import nacl from "tweetnacl";
 import * as utf8 from "@stablelib/utf8";
 import * as base64 from "@stablelib/base64";
 import { absoluteURL } from "../util/url";
+import {request} from "../util/request";
 
 
 export type AssetElement = HTMLScriptElement | HTMLLinkElement;
@@ -194,3 +195,64 @@ export class DocumentAssetManager {
 }
 
 export const AssetManager: DocumentAssetManager = new DocumentAssetManager(document.head);
+
+
+export class LazyImage {
+
+    readonly url: string
+    private _init: boolean = false;
+    private _value: HTMLImageElement | null = null;
+    private _available: boolean = false;
+    private readonly _objectMode: boolean;
+
+    constructor(url: string) {
+        this.url = url
+        this._objectMode = typeof URL === "function" && !!URL["createObjectURL"] && typeof Blob === "function";
+    }
+
+    startLoading() {
+        this._init = true;
+
+        const me = this;
+        const img: HTMLImageElement = (typeof Image === "function") ? new Image() : document.createElement("img");
+        img.onload = function () {
+            if (!me._init) {
+                if (me._objectMode) URL.revokeObjectURL(img.src);
+                return;
+            }
+            me._value = img;
+            me._available = true;
+        };
+        img.onerror = function () {
+            if (me._objectMode) URL.revokeObjectURL(img.src);
+        };
+
+        if (this._objectMode) {
+            request.getPotentiallyPrivate(absoluteURL(this.url), undefined, "bytes").then((bytes: Uint8Array) => {
+                if (!me._init) return;
+                const blob: Blob = new Blob([ bytes.buffer ]);
+                img.src = URL.createObjectURL(blob);
+            }).catch(console.error);
+        } else {
+            img.src = absoluteURL(this.url);
+        }
+    }
+
+    isAvailable() {
+        return this._available;
+    }
+
+    get(): HTMLImageElement {
+        return this._value!;
+    }
+
+    destroy() {
+        if (this._available && this._objectMode) {
+            URL.revokeObjectURL(this._value!.src);
+        }
+        this._available = false;
+        this._value = null;
+        this._init = false;
+    }
+
+}

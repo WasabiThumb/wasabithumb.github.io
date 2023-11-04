@@ -16,9 +16,10 @@
 
 import {ShowcaseSlide, ShowcaseSlideParameters} from "../showcase";
 import {HSV, RGB} from "../../util/color";
-import {absoluteURL} from "../../util/url";
 import KeyStore from "../../struct/keystore";
-import {request} from "../../util/request";
+import {Vector, Vector2} from "../../math/vector";
+import {LazyImage} from "../../struct/asset";
+import Line from "../../math/line";
 
 
 const TARGET_SIZE: number = 256;
@@ -37,11 +38,11 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
     private _wallImage: LazyImage = new LazyImage("data:image/png;");
     private _ceilingImageAlpha: number = 0;
     private _wallImageAlpha: number = 0;
-    private _eyePos: Point = [ 0, 0 ];
+    private _eyePos: Vector2 = new Vector2();
     private _eyeAngles: number = 0;
-    private _movePosStart: Point = [ 0, 0 ];
+    private _movePosStart: Vector2 = new Vector2();
     private _moveAnglesStart: number = 0;
-    private _movePosEnd: Point = [ 0, 0 ];
+    private _movePosEnd: Vector2 = new Vector2();
     private _moveAnglesEnd: number = 0;
     private _moveProgress: number = 2;
     private _walls: Line[] = [];
@@ -73,10 +74,10 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
                 this._matrix[my][mx] = 0;
 
                 for (let d of MoveDirections) {
-                    const [ dx, dy ] = d.direction;
-                    const line: Line = new Line(
-                        [ x + 0.5, y + 0.5 ],
-                        [ x + 0.5 + dx, y + 0.5 + dy ]
+                    const v = d.vector;
+                    const line: Line = Line.of(
+                        x + 0.5, y + 0.5,
+                        x + 0.5 + v.x, y + 0.5 + v.y
                     );
 
                     let collides: boolean = false;
@@ -87,21 +88,21 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
                         }
                     }
 
-                    if (!collides) this._matrix[my + dy][mx + dx] = 0;
+                    if (!collides) this._matrix[my + v.y][mx + v.x] = 0;
                 }
             }
         }
 
         const center = Math.floor(MAZE_SIZE / 2) + 0.5;
-        this._eyePos = this._movePosEnd = [ center, center ];
+        this._eyePos = this._movePosEnd = new Vector2(center, center);
         this._eyeAngles = this._moveAnglesEnd = 0;
         this._moveProgress = 2;
 
         const hue: number = Math.random();
         this._ceilingColor = HSV.toRGB([ hue, 1, 1 ]);
         this._wallColor = HSV.toRGB([ (hue + 0.5) % 1, 1, 1 ]);
-        this._ceilingImage = LazyImage.random();
-        this._wallImage = LazyImage.random(true);
+        this._ceilingImage = randomImage();
+        this._wallImage = randomImage(true);
         this._ceilingImage.startLoading();
         this._wallImage.startLoading();
         this._ceilingImageAlpha = 0;
@@ -164,10 +165,10 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
 
         const d: number = this._moveProgress;
         if (d >= 1) {
-            this._eyePos = [...this._movePosEnd];
+            this._eyePos = this._movePosEnd.copy();
             this._eyeAngles = this._moveAnglesEnd % (Math.PI * 2);
 
-            this._movePosStart = [...this._eyePos];
+            this._movePosStart = this._eyePos.copy();
             this._moveAnglesStart = this._eyeAngles;
 
             // Compute move end pos
@@ -175,29 +176,24 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
 
             this._moveProgress = 0;
         } else {
-            let u: number = d;
-            let v: number = 1 - u;
-            this._eyePos = [
-                this._movePosStart[0] * v + this._movePosEnd[0] * u,
-                this._movePosStart[1] * v + this._movePosEnd[1] * u,
-            ];
-            u = Math.min(u * 1.5, 1);
+            this._eyePos = Vector.lerp(this._movePosStart, this._movePosEnd, d);
+            let u: number = Math.min(d * 1.5, 1);
             u = (3 * u * u) - (2 * u * u * u);
-            v = 1 - u;
+            let v: number = 1 - u;
             this._eyeAngles = this._moveAnglesStart * v + this._moveAnglesEnd * u;
         }
     }
 
     private _onJunction() {
         const dirs = getSortedMoveDirections(this._eyeAngles);
-        let [ matrixX, matrixY ] = this._getEyeMatrixPos();
-        this._boredom[matrixY][matrixX]++;
+        let mp = this._getEyeMatrixPos();
+        this._boredom[mp.y][mp.x]++;
 
         let valid: MoveDirection[] = [];
         let allowBackward: boolean = true;
         for (let i=0; i < 4; i++) {
             const dir: MoveDirection = dirs[i];
-            let value = this._matrix[matrixY + dir.direction[1]][matrixX + dir.direction[0]];
+            let value = this._matrix[mp.y + dir.vector.y][mp.x + dir.vector.x];
             if (value) continue;
             if (i < 3) {
                 allowBackward = false;
@@ -205,18 +201,18 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
                 continue;
             }
 
-            const weight = 26 - Math.pow(Math.min(this._boredom[matrixY + dir.direction[1]][matrixX + dir.direction[0]], 4), 2);
+            const weight = 26 - Math.pow(Math.min(this._boredom[mp.y + dir.vector.y][mp.x + dir.vector.x], 4), 2);
             for (let z=0; z < weight; z++) valid.push(dir);
         }
 
         if (valid.length < 1) {
-            this._movePosEnd = [...this._eyePos];
+            this._movePosEnd = this._eyePos.copy();
             this._moveAnglesEnd = this._eyeAngles + Math.PI;
             return;
         }
 
         const choice: MoveDirection = valid[Math.floor(Math.random() * (valid.length - 1))];
-        this._movePosEnd = [ this._eyePos[0] + choice.direction[0], this._eyePos[1] + choice.direction[1] ];
+        this._movePosEnd = Vector.sum(this._eyePos, choice.vector);
 
         const twoPi: number = Math.PI * 2;
         const angleCandidates: number[] = [ choice.angle - twoPi, choice.angle, choice.angle + twoPi ];
@@ -232,12 +228,12 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         this._moveAnglesEnd = min;
     }
 
-    private _getEyeMatrixPos(): Point {
-        let matrixX = 2 * Math.floor(this._eyePos[0]) + 1;
-        let matrixY = 2 * Math.floor(this._eyePos[1]) + 1;
+    private _getEyeMatrixPos(): Vector2 {
+        let matrixX = 2 * Math.floor(this._eyePos.x) + 1;
+        let matrixY = 2 * Math.floor(this._eyePos.y) + 1;
         matrixX = Math.min(Math.max(matrixX, 1), this._matrix.length - 2);
         matrixY = Math.min(Math.max(matrixY, 1), this._matrix.length - 2);
-        return [ matrixX, matrixY ];
+        return new Vector2(matrixX, matrixY);
     }
 
     private _ceilingScroll: number = 0;
@@ -293,23 +289,11 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         }
     }
 
-    private _traceParams: { forward: Point, right: Point, camOrigin: Point } = { forward: [1,0], right: [0,-1], camOrigin: [0,0] };
+    private _traceParams: { forward: Vector2, right: Vector2, camOrigin: Vector2 } = { forward: new Vector2(1, 0), right: new Vector2(0, -1), camOrigin: new Vector2() };
     private _generateTraceParams() {
-        const forward: Point = [
-            Math.cos(this._eyeAngles),
-            Math.sin(this._eyeAngles)
-        ];
-
-        const right: Point = [
-            forward[1],
-            -forward[0]
-        ];
-
-        const camOrigin: Point = [
-            this._eyePos[0] - (forward[0] * Z_NEAR),
-            this._eyePos[1] - (forward[1] * Z_NEAR)
-        ];
-
+        const forward: Vector2 = Vector2.fromAngle(this._eyeAngles);
+        const right: Vector2 = forward.getRight();
+        const camOrigin: Vector2 = Vector.difference(this._eyePos, Vector.product(forward, Z_NEAR));
         this._traceParams = { forward, right, camOrigin };
     }
 
@@ -317,33 +301,26 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         const { right, camOrigin } = this._traceParams;
 
         const d: number = (x / (resolution - 1)) - 0.5;
-        const rayOrigin: Point = [
-            this._eyePos[0] + (right[0] * CAM_SIZE * d),
-            this._eyePos[1] + (right[1] * CAM_SIZE * d)
-        ];
+        const rayOrigin: Vector2 = Vector.sum(this._eyePos, Vector.product(right, CAM_SIZE * d));
 
-        const rayNormal: Point = [
-            rayOrigin[0] - camOrigin[0],
-            rayOrigin[1] - camOrigin[1]
-        ];
-        const distInCam: number = Math.sqrt(Math.pow(rayNormal[0], 2) + Math.pow(rayNormal[1], 2));
-        rayNormal[0] /= distInCam;
-        rayNormal[1] /= distInCam;
+        const rayNormal: Vector2 = Vector.difference(rayOrigin, camOrigin);
+        const distInCam: number = Math.sqrt(Math.pow(rayNormal.x, 2) + Math.pow(rayNormal.y, 2));
+        rayNormal.divide(distInCam);
 
         const ray: Line = new Line(
             rayOrigin,
-            [ rayOrigin[0] + rayNormal[0] * Z_FAR, rayOrigin[1] + rayNormal[1] * Z_FAR ]
+            Vector.sum(rayOrigin, Vector.product(rayNormal, Z_FAR))
         );
 
         const max: number = Z_FAR * Z_FAR;
         let dist: number = max;
         let u: number = 0;
-        let candidate: Point | null;
+        let candidate: Vector2 | null;
         for (let wall of this._walls) {
             candidate = ray.intersection(wall);
             if (candidate === null) continue;
             let cu: number = wall.getProgressAlong(candidate);
-            let d = Math.pow(candidate[0] - rayOrigin[0], 2) + Math.pow(candidate[1] - rayOrigin[1], 2);
+            let d = Math.pow(candidate.x - rayOrigin.x, 2) + Math.pow(candidate.y - rayOrigin.y, 2);
             if (d <= Z_NEAR_SQR) return { valid: true, textureLoc: cu, height: resolution, light: 1 };
             if (d < dist) {
                 dist = d;
@@ -365,13 +342,13 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         ctx.beginPath();
         for (let wall of this._walls) {
             const [ a, b ] = wall.toPair();
-            ctx.moveTo(scale * a[0], scale * a[1]);
-            ctx.lineTo(scale * b[0], scale * b[1]);
+            ctx.moveTo(scale * a.x, scale * a.y);
+            ctx.lineTo(scale * b.x, scale * b.y);
         }
         ctx.stroke();
 
-        const mx: number = scale * this._eyePos[0];
-        const my: number = scale * this._eyePos[1];
+        const mx: number = scale * this._eyePos.x;
+        const my: number = scale * this._eyePos.y;
 
         const FOV = Math.atan((0.5 * CAM_SIZE) / Z_NEAR);
         const [ lcx, lcy ] = [ scale * 2 * Math.cos(this._eyeAngles - FOV), scale * 2 * Math.sin(this._eyeAngles - FOV) ];
@@ -406,205 +383,6 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
 
 type NBool = 0 | 1;
 type ColumnData = { valid: true, height: number, light: number, textureLoc: number } | { valid: false };
-type Point = [ number, number ];
-enum LineModeType {
-    DIAGONAL,
-    HORIZONTAL,
-    VERTICAL
-}
-type LineMode = Readonly<HorizontalLineMode | VerticalLineMode | DiagonalLineMode>;
-type HorizontalLineMode = { type: LineModeType.HORIZONTAL, min: number, max: number, n: number, reverse: boolean };
-type VerticalLineMode = { type: LineModeType.VERTICAL, min: number, max: number, n: number, reverse: boolean };
-type DiagonalLineMode = { type: LineModeType.DIAGONAL, min: number, max: number, m: number, b: number, bbx: boolean, reverse: boolean };
-const EPSILON: number = 1e-8;
-
-class Line {
-
-    static equals(a: Line, b: Line): boolean {
-        const modeType = a.mode.type;
-        if (modeType !== b.mode.type) return false;
-        switch (modeType) {
-            case LineModeType.DIAGONAL:
-                const ad: DiagonalLineMode = a.mode as DiagonalLineMode;
-                const bd: DiagonalLineMode = b.mode as DiagonalLineMode;
-                return ad.m === bd.m && ad.b === bd.b && ad.min === bd.min && ad.bbx === bd.bbx;
-            case LineModeType.VERTICAL:
-                const av: VerticalLineMode = a.mode as VerticalLineMode;
-                const bv: VerticalLineMode = b.mode as VerticalLineMode;
-                return av.min === bv.min && av.max === bv.max && av.n === bv.n;
-            case LineModeType.HORIZONTAL:
-                const ah: HorizontalLineMode = a.mode as HorizontalLineMode;
-                const bh: HorizontalLineMode = b.mode as HorizontalLineMode;
-                return ah.min === bh.min && ah.max === bh.max && ah.n === bh.n;
-        }
-        return a === b;
-    }
-
-    readonly mode: LineMode;
-
-    constructor(a: Point, b: Point) {
-        const [ ax, ay ] = a;
-        const [ bx, by ] = b;
-        const dx: number = bx - ax;
-        if (Math.abs(dx) <= EPSILON) {
-            this.mode = { type: LineModeType.VERTICAL, min: Math.min(ay, by), max: Math.max(ay, by), n: (ax + bx) / 2, reverse: by < ay };
-            return;
-        }
-        const dy: number = by - ay;
-        if (Math.abs(dy) <= EPSILON) {
-            this.mode = { type: LineModeType.HORIZONTAL, min: Math.min(ax, bx), max: Math.max(ax, bx), n: (ay + by) / 2, reverse: bx < ax };
-            return;
-        }
-
-        const lm: number = dy / dx;
-        const lb: number = ay - (lm * ax);
-
-        if (dx >= dy) {
-            this.mode = { type: LineModeType.DIAGONAL, min: Math.min(ax, bx), max: Math.max(ax, bx), m: lm, b: lb, bbx: true, reverse: bx < ax };
-        } else {
-            this.mode = { type: LineModeType.DIAGONAL, min: Math.min(ay, by), max: Math.max(ay, by), m: lm, b: lb, bbx: false, reverse: by < ay };
-        }
-    }
-
-    intersection(other: Line): Point | null {
-        const { mode } = this;
-        switch (mode.type) {
-            case LineModeType.DIAGONAL:
-                return Line._intersectDX(mode, other.mode);
-            case LineModeType.VERTICAL:
-                return Line._intersectVX(mode, other.mode);
-            case LineModeType.HORIZONTAL:
-                return Line._intersectHX(mode, other.mode);
-        }
-        return null;
-    }
-
-    getProgressAlong(point: Point): number {
-        let { min, max, reverse } = this.mode;
-        let bound: number;
-        switch (this.mode.type) {
-            case LineModeType.DIAGONAL:
-                bound = this.mode.bbx ? point[0] : point[1];
-                break;
-            case LineModeType.VERTICAL:
-                bound = point[1];
-                break;
-            case LineModeType.HORIZONTAL:
-                bound = point[0];
-                break;
-            default:
-                return 0;
-        }
-
-        let amt: number = (bound - min) / (max - min);
-        amt = Math.min(Math.max(amt, 0), 1);
-        if (reverse) amt = 1 - amt;
-        return amt;
-    }
-
-    toPair(): [ Point, Point ] {
-        const { mode } = this;
-        switch (mode.type) {
-            case LineModeType.DIAGONAL:
-                if (mode.bbx) {
-                    return [ [ mode.min, mode.m * mode.min + mode.b ], [ mode.max, mode.m * mode.min + mode.b ] ];
-                } else {
-                    return [ [ (mode.min - mode.b) / mode.m, mode.min ], [ (mode.max - mode.b) / mode.m, mode.max ] ];
-                }
-            case LineModeType.HORIZONTAL:
-                return [ [ mode.min, mode.n ], [ mode.max, mode.n ] ];
-            case LineModeType.VERTICAL:
-                return [ [ mode.n, mode.min ], [ mode.n, mode.max ] ];
-        }
-        return [[0,0],[0,0]];
-    }
-
-    private static _intersectDX(a: DiagonalLineMode, b: LineMode): Point | null {
-        switch (b.type) {
-            case LineModeType.DIAGONAL:
-                return this._intersectDD(a, b);
-            case LineModeType.VERTICAL:
-                return this._intersectDV(a, b);
-            case LineModeType.HORIZONTAL:
-                return this._intersectDH(a, b);
-        }
-        return null;
-    }
-
-    private static _intersectHX(a: HorizontalLineMode, b: LineMode): Point | null {
-        switch (b.type) {
-            case LineModeType.DIAGONAL:
-                return this._intersectDH(b, a);
-            case LineModeType.VERTICAL:
-                return this._intersectHV(a, b);
-            case LineModeType.HORIZONTAL:
-                return this._intersectHHVV(a, b);
-        }
-        return null;
-    }
-
-    private static _intersectVX(a: VerticalLineMode, b: LineMode): Point | null {
-        switch (b.type) {
-            case LineModeType.DIAGONAL:
-                return this._intersectDV(b, a);
-            case LineModeType.VERTICAL:
-                return this._intersectHHVV(a, b);
-            case LineModeType.HORIZONTAL:
-                return this._intersectHV(b, a);
-        }
-        return null;
-    }
-
-    private static _intersectHV(a: HorizontalLineMode, b: VerticalLineMode): Point | null {
-        if (b.n < a.min || b.n > a.max) return null;
-        if (a.n < b.min || a.n > b.max) return null;
-        return [ b.n, a.n ];
-    }
-
-    private static _intersectHHVV<T extends HorizontalLineMode | VerticalLineMode>(a: T, b: T): Point | null {
-        let [ lo, hi ] = [ Math.max(a.min, b.min), Math.min(a.max, b.max) ];
-        if (lo > hi) return null;
-        if (Math.abs(a.n - b.n) > EPSILON) return null;
-
-        let ret: Point = [ (lo + hi) / 2, (a.n + b.n) / 2 ];
-        if (a.type == LineModeType.VERTICAL) ret = [ ret[1], ret[0] ];
-        return ret;
-    }
-
-    private static _intersectDD(a: DiagonalLineMode, b: DiagonalLineMode): Point | null {
-        const x: number = (b.b - a.b) / (a.m - b.m);
-        const y: number = a.m * x + a.b;
-        if (!this._inBoundsD(a, x, y)) return null;
-        if (!this._inBoundsD(b, x, y)) return null;
-        return [ x, y ];
-    }
-
-    private static _intersectDH(a: DiagonalLineMode, b: HorizontalLineMode): Point | null {
-        const y: number = b.n;
-        const x: number = (y - a.b) / a.m;
-        if (x < b.min || x > b.max) return null;
-        if (!this._inBoundsD(a, x, y)) return null;
-        return [ x, y ];
-    }
-
-    private static _intersectDV(a: DiagonalLineMode, b: VerticalLineMode): Point | null {
-        const x: number = b.n;
-        const y: number = (a.m * x) + a.b;
-        if (y < b.min || y > b.max) return null;
-        if (!this._inBoundsD(a, x, y)) return null;
-        return [ x, y ];
-    }
-
-    private static _inBoundsD(a: DiagonalLineMode, x: number, y: number): boolean {
-        if (a.bbx) {
-            if (x < a.min || x > a.max) return false;
-        } else {
-            if (y < a.min || y > a.max) return false;
-        }
-        return true;
-    }
-
-}
 
 class MazeCell {
 
@@ -656,9 +434,9 @@ class MazeCell {
 
         for (let space of spaces) {
             if (vertical) {
-                output.push(new Line([this.x + asize, this.y + space], [this.x + asize, this.y + space + 1]));
+                output.push(Line.of(this.x + asize, this.y + space, this.x + asize, this.y + space + 1));
             } else {
-                output.push(new Line([this.x + space, this.y + asize], [this.x + space + 1, this.y + asize]));
+                output.push(Line.of(this.x + space, this.y + asize, this.x + space + 1, this.y + asize));
             }
         }
 
@@ -668,12 +446,12 @@ class MazeCell {
     getOutline(): Line[] {
         const ret: Line[] = [];
         for (let xv=0; xv < this.w; xv++) {
-            ret.push(new Line([this.x + xv, this.y], [this.x + xv + 1, this.y]));
-            ret.push(new Line([this.x + xv, this.y + this.h], [this.x + xv + 1, this.y + this.h]));
+            ret.push(Line.of(this.x + xv, this.y, this.x + xv + 1, this.y));
+            ret.push(Line.of(this.x + xv, this.y + this.h, this.x + xv + 1, this.y + this.h));
         }
         for (let yv=0; yv < this.h; yv++) {
-            ret.push(new Line([this.x, this.y + yv], [this.x, this.y + yv + 1]));
-            ret.push(new Line([this.x + this.w, this.y + yv], [this.x + this.w, this.y + yv + 1]));
+            ret.push(Line.of(this.x, this.y + yv, this.x, this.y + yv + 1));
+            ret.push(Line.of(this.x + this.w, this.y + yv, this.x + this.w, this.y + yv + 1));
         }
         return ret;
     }
@@ -682,24 +460,24 @@ class MazeCell {
 
 type MoveDirection = {
     readonly angle: number,
-    readonly direction: [number, number]
+    readonly vector: Vector2
 };
 const MoveDirections: [MoveDirection, MoveDirection, MoveDirection, MoveDirection] = [ // +X +Y -X -Y
     {
         angle: 0,
-        direction: [ 1, 0 ]
+        vector: new Vector2(1, 0)
     },
     {
         angle: Math.PI / 2,
-        direction: [ 0, 1 ]
+        vector: new Vector2(0, 1)
     },
     {
         angle: Math.PI,
-        direction: [ -1, 0 ]
+        vector: new Vector2(-1, 0)
     },
     {
         angle: Math.PI * 3 / 2,
-        direction: [ 0, -1 ]
+        vector: new Vector2(0, -1)
     }
 ];
 
@@ -721,72 +499,12 @@ function getSortedMoveDirections(angle: number): [ MoveDirection, MoveDirection,
 }
 
 const MAZE_IMAGES: string[] = [ "bricks", "grating1", "grating2", "metal", "sky", "weave" ];
-class LazyImage {
-
-    readonly url: string
-    private _init: boolean = false;
-    private _value: HTMLImageElement | null = null;
-    private _available: boolean = false;
-    private readonly _objectMode: boolean;
-
-    constructor(url: string) {
-        this.url = url
-        this._objectMode = typeof URL === "function" && !!URL["createObjectURL"] && typeof Blob === "function";
+function randomImage(wall: boolean = false): LazyImage {
+    let choice: string;
+    if (wall && Math.random() <= 0.01 && KeyStore.hasKey()) {
+        choice = "creature";
+    } else {
+        choice = MAZE_IMAGES[Math.floor(Math.random() * MAZE_IMAGES.length)];
     }
-
-    startLoading() {
-        this._init = true;
-
-        const me = this;
-        const img: HTMLImageElement = (typeof Image === "function") ? new Image() : document.createElement("img");
-        img.onload = function () {
-            if (!me._init) {
-                if (me._objectMode) URL.revokeObjectURL(img.src);
-                return;
-            }
-            me._value = img;
-            me._available = true;
-        };
-        img.onerror = function () {
-            if (me._objectMode) URL.revokeObjectURL(img.src);
-        };
-
-        if (this._objectMode) {
-            request.getPotentiallyPrivate(absoluteURL(this.url), undefined, "bytes").then((bytes: Uint8Array) => {
-                if (!me._init) return;
-                const blob: Blob = new Blob([ bytes.buffer ]);
-                img.src = URL.createObjectURL(blob);
-            }).catch(console.error);
-        } else {
-            img.src = absoluteURL(this.url);
-        }
-    }
-
-    isAvailable() {
-        return this._available;
-    }
-
-    get(): HTMLImageElement {
-        return this._value!;
-    }
-
-    destroy() {
-        if (this._available && this._objectMode) {
-            URL.revokeObjectURL(this._value!.src);
-        }
-        this._available = false;
-        this._value = null;
-        this._init = false;
-    }
-
-    static random(wall: boolean = false): LazyImage {
-        let choice: string;
-        if (wall && Math.random() <= 0.01 && KeyStore.hasKey()) {
-            choice = "creature";
-        } else {
-            choice = MAZE_IMAGES[Math.floor(Math.random() * MAZE_IMAGES.length)];
-        }
-        return new LazyImage(`assets/images/maze/${choice}.jpg`);
-    }
-
+    return new LazyImage(`assets/images/maze/${choice}.jpg`);
 }
