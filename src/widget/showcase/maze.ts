@@ -29,6 +29,7 @@ const Z_NEAR: number = 0.25;
 const Z_NEAR_SQR: number = Z_NEAR * Z_NEAR;
 const CAM_SIZE: number = 0.5;
 const WALL_HEIGHT: number = 1.5;
+const mod = (a: number, b: number) => ((a % b) + b) % b;
 
 export default class MazeShowcaseSlide implements ShowcaseSlide {
 
@@ -166,7 +167,7 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         const d: number = this._moveProgress;
         if (d >= 1) {
             this._eyePos = this._movePosEnd.copy();
-            this._eyeAngles = this._moveAnglesEnd % (Math.PI * 2);
+            this._eyeAngles = mod(this._moveAnglesEnd, Math.PI * 2);
 
             this._movePosStart = this._eyePos.copy();
             this._moveAnglesStart = this._eyeAngles;
@@ -246,9 +247,21 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, size, size);
 
-        this._ceilingScroll = (this._ceilingScroll + delta * 0.125) % 1;
+        this._ceilingScroll = (this._ceilingScroll + delta * 0.135) % 1;
+        let hScroll: number = mod(-this._eyeAngles, Math.PI) / Math.PI;
         if (this._ceilingImage.isAvailable()) {
             const img = this._ceilingImage.get();
+            let tex: CanvasImageSource;
+            let isGrid: boolean = false;
+
+            const g = this._ceilingImage.getGrid(2, 1);
+            if (!!g) {
+                tex = g;
+                isGrid = true;
+            } else {
+                tex = img;
+            }
+
             ctx.globalCompositeOperation = "multiply";
             this._ceilingImageAlpha = Math.min(this._ceilingImageAlpha + delta, 1);
             ctx.globalAlpha = this._ceilingImageAlpha;
@@ -258,7 +271,7 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
                 let distance = 1 - (Math.abs(y - (size * 0.5)) / (size * 0.5));
                 let width = (-1 / (distance - 2)) * img.naturalWidth;
                 let imgX = (img.naturalWidth - width) / 2;
-                ctx.drawImage(img, imgX, imgY, width, 1, 0, y, size, 1);
+                ctx.drawImage(tex, imgX + (isGrid ? (img.naturalWidth * hScroll) : 0), imgY, width, 1, 0, y, size, 1);
             }
             ctx.globalAlpha = 1;
             ctx.globalCompositeOperation = "source-over";
@@ -483,8 +496,7 @@ const MoveDirections: [MoveDirection, MoveDirection, MoveDirection, MoveDirectio
 
 function getSortedMoveDirections(angle: number): [ MoveDirection, MoveDirection, MoveDirection, MoveDirection ] {
     const twoPi: number = Math.PI * 2;
-    while (angle < 0) angle += twoPi;
-    const norm: number = (angle % twoPi) * (200 / twoPi);
+    const norm: number = mod(angle, twoPi) * (200 / twoPi);
 
     if (norm <= 25 || norm >= 175) {
         return [ MoveDirections[0], MoveDirections[3], MoveDirections[1], MoveDirections[2] ];

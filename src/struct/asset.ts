@@ -253,6 +253,37 @@ export class LazyImage {
         this._available = false;
         this._value = null;
         this._init = false;
+        this._gridCache = {};
+    }
+
+    private _gridCache: { [hash: number]: ImageBitmap | null } = {};
+    getGrid(width: number, height: number): ImageBitmap | null {
+        if (width < 1 || width > 0xffff || height < 1 || height > 0xffff) throw new Error(`Dimensions out of bounds: ${width}x${height}`);
+        if (!this._available) return null;
+
+        let hash: number = ((width & 0xffff) << 16) | (height & 0xffff);
+        let cached = this._gridCache[hash];
+        if (!!cached || cached === null) return cached;
+
+        try {
+            const img: HTMLImageElement = this._value!;
+            const offscreen: OffscreenCanvas = new OffscreenCanvas(img.naturalWidth * width, img.naturalHeight * height);
+
+            const ctx: OffscreenCanvasRenderingContext2D = offscreen.getContext("2d")!;
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
+                    ctx.drawImage(img, x * img.naturalWidth, y * img.naturalHeight, img.naturalWidth, img.naturalHeight);
+                }
+            }
+
+            const bmp = offscreen.transferToImageBitmap();
+            this._gridCache[hash] = bmp;
+            return bmp;
+        } catch (e) {
+            console.warn(e);
+            this._gridCache[hash] = null;
+            return null;
+        }
     }
 
 }
