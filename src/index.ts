@@ -13,3 +13,33 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+
+import Loader from "./util/loader";
+import Navigator from "./struct/navigation";
+import {LIB_VERSION} from "./util/version";
+import KeyStore from "./struct/keystore";
+
+const navigator: Navigator = new Navigator();
+window.addEventListener("hashchange", () => {
+    navigator.checkHash();
+});
+navigator.checkHash();
+
+type MasterNavigator = Navigator;
+declare global {
+    interface Window {
+        pages: MasterNavigator;
+        keystore: KeyStore;
+    }
+}
+window.pages = navigator;
+window.keystore = KeyStore;
+
+const loader: Loader = window.loader;
+loader.removeToken("bundle-load");
+loader.onLoad(() => {
+    console.log(`Loaded Portfolio bundle v${LIB_VERSION}`);
+    if (LIB_VERSION.indexOf("git") >= 0) loader.forceLoad();
+});
+
+

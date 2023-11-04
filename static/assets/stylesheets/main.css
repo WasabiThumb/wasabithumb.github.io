@@ -1,3 +1,4 @@
+@import "font.css";
 
 html, body {
     width: 100vw;
@@ -9,4 +10,116 @@ html, body {
     padding: 0;
     box-sizing: border-box;
     overflow: hidden;
+}
+
+.loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 999;
+    background: black;
+    color: #efefef;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: min(10vw, 35vh);
+    text-align: center;
+    box-sizing: border-box;
+    padding-top: calc(50vh - 0.75em);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+}
+
+.loader > p {
+    font: inherit;
+    display: inline-block;
+    margin: 0;
+    min-width: 0.9em;
+    text-align: center;
+}
+
+.loader > p.dummy {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loader > p.anim {
+    position: absolute;
+    transform-origin: center;
+}
+
+.loader.done {
+    pointer-events: none;
+    animation-duration: 1s;
+    animation-timing-function: ease-out;
+    animation-name: loader-fade-out;
+    animation-iteration-count: 1;
+    opacity: 0;
+}
+
+@keyframes loader-fade-out {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+.dyn-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 200;
+    pointer-events: none;
+    opacity: 0;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+.dyn-page.active {
+    z-index: 300;
+    opacity: 1;
+    pointer-events: initial;
+}
+
+.blocker {
+    z-index: 900;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: initial;
+    background-color: rgba(0, 0, 0, 0);
+    transition-property: background-color;
+    transition-duration: 75ms;
+    transition-timing-function: ease-in-out;
+    box-sizing: border-box;
+}
+
+.blocker.slow {
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.blocker > img {
+    position: absolute;
+    top: 35%;
+    left: 35%;
+    width: 30%;
+    height: 30%;
+    object-position: center;
+    object-fit: contain;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 75ms;
+    transition-timing-function: ease-in-out;
+}
+
+.blocker.slow > img {
+    opacity: 1;
 }

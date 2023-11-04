@@ -11,7 +11,8 @@
     "outDir": "./dist/",
     "lib": [
       "es2015",
-      "dom"
+      "dom",
+      "scripthost"
     ]
   },
   "exclude": ["node_modules", "static", "dist", "private"]

@@ -30,7 +30,7 @@ npm run build
       which can be unencrypted in the browser by supplying my personal e-mail as a password. The private
       contents are automatically encrypted and copied into the ``static`` directory suffixed with ``.private``,
       thus making the unencrypted contents of the ``private`` directory unnecessary for building & viewing the site.
-    - ``private/.key`` **:** The encryption password (e.g. my personal e-mail). Presence of this dotfile indicates that
+    - ``private/key`` **:** The encryption password (e.g. my personal e-mail). Presence of this file indicates that
       you own and wish to pack private files, otherwise this is skipped during commits.
 - **Documentation** <br> You're looking at it!
   - ``README.md``

@@ -14,5 +14,18 @@
    limitations under the License.
 */
 
-// This file will be dynamically filled with the correct version string when the project is built.
-export const LIB_VERSION: string = "1.0.0-git-e9485dc";
+export const absoluteURL: ((rel: string) => string) = (() => {
+
+    if (typeof URL === "function") {
+        return ((rel: string) => {
+            return (new URL(rel, document.baseURI)).href;
+        });
+    } else {
+        return ((rel: string) => {
+            const link = document.createElement("a");
+            link.href = rel;
+            return link.protocol + "//" + link.host + link.pathname;
+        });
+    }
+
+})();

@@ -26,7 +26,7 @@ module.exports = (async () => {
             new CopyPlugin({
                 patterns: [
                     "static/index.html",
-                    "static/.key.private",
+                    "static/key.private",
                     {
                         from: "static/assets",
                         to: path.resolve(__dirname, 'dist', 'assets'),
@@ -54,7 +54,10 @@ module.exports = (async () => {
             })
         ],
         resolve: {
-            extensions: ['.tsx', '.ts', '.js']
+            extensions: ['.tsx', '.ts', '.js'],
+            fallback: {
+                buffer: require.resolve("buffer/")
+            }
         },
         output: {
             filename: 'bundle.js',

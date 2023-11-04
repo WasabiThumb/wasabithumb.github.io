@@ -14,22 +14,21 @@
    limitations under the License.
 */
 
-declare type LoaderProtectedToken = "dom-content";
-declare type LoaderToken = Exclude<string, LoaderProtectedToken>;
+export class AsyncLock {
 
-declare interface Loader {
-    addToken(token: LoaderToken): void;
-    removeToken(token: LoaderToken): boolean;
-    isLoaded(): boolean;
-    forceLoad(): void;
-    getExpireDelay(): number;
-    setExpireDelay(delay: number): void;
-}
+    private _promise: Promise<void> = Promise.resolve();
+    private _resolve: () => void = (() => {});
 
-declare global {
-    interface Window {
-        loader: Loader;
+    async lock(): Promise<void> {
+        await this._promise;
+        const me = this;
+        this._promise = new Promise<void>((res) => {
+            me._resolve = (() => { res(); });
+        });
     }
-}
 
-export default Loader;
+    unlock(): void {
+        this._resolve();
+    }
+
+}
