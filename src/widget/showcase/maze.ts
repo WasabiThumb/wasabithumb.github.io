@@ -514,12 +514,14 @@ function getSortedMoveDirections(angle: number): [ MoveDirection, MoveDirection,
 }
 
 const MAZE_IMAGES: string[] = [ "bricks", "grating1", "grating2", "metal", "sky", "weave" ];
+let engageSilly: boolean = false;
 function randomImage(wall: boolean = false): LazyImage {
     let choice: string;
-    if (wall && Math.random() <= 0.01 && KeyStore.hasKey()) {
+    if (wall && engageSilly && Math.random() <= 0.01 && KeyStore.hasKey()) {
         choice = "creature";
     } else {
         choice = MAZE_IMAGES[Math.floor(Math.random() * MAZE_IMAGES.length)];
+        engageSilly = true;
     }
     return new LazyImage(`assets/images/maze/${choice}.jpg`);
 }

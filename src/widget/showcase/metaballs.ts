@@ -43,6 +43,7 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
     private _cursor: CursorTracker | null = null;
     private _ballColor: RGB = RGB.black();
     private _bgColor: RGB = RGB.black();
+    private _transitionProgress: number = -8;
 
     init(param: ShowcaseSlideParameters): void {
         const hue = Math.random();
@@ -60,6 +61,7 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
             this._balls.push({ id: i, pos, velocity: new Vector2(-cos * 2.5 * velMag, -sin * 2.5 * velMag), radius: 0.15 + (0.4 * Math.random()) });
         }
         this._cursor = new CursorTracker();
+        this._transitionProgress = -8;
     }
 
     render(param: ShowcaseSlideParameters, delta: number, age: number): void {
@@ -93,6 +95,10 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
         fg.addColorStop(0, RGB.toCSS(this._ballColor));
         fg.addColorStop(1, RGB.toCSS(RGB.lerp(this._ballColor, RGB.black(), 0.8)));
         ctx.fillStyle = fg;
+
+        if (this._transitionProgress >= 0 && this._transitionProgress <= 1) {
+            ctx.globalAlpha = 4 * Math.pow(this._transitionProgress - 0.5, 2);
+        }
 
         this._evalCache = {};
         for (let y=0; y < cellCount; y++) {
@@ -134,6 +140,8 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
             }
             checkStripe();
         }
+        ctx.globalAlpha = 1;
+        this._transitionProgress += delta * 2;
     }
 
     private _renderCell(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, canvasMins: Vector2, canvasMaxs: Vector2, gridPos: Vector2, gridSize: number): boolean {
@@ -142,7 +150,7 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
         for (let i=0; i < 4; i++) {
             let weight: number = this._evaluate(Vector.sum(gridPos, OFFSETS[i]), gridSize);
             cornerWeights[i] = weight;
-            if (weight >= THRESHOLD) flag |= (1 << (3 - i));
+            if (this._transitionProgress <= 0.5 ? weight >= THRESHOLD : weight <= THRESHOLD) flag |= (1 << (3 - i));
         }
         if (flag === 0) return false;
         if (flag === 15) return true;
@@ -197,7 +205,7 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
 
     private _simulationStep(delta: number) {
         for (let ball of this._balls) {
-            ball.velocity.multiply(Math.max(1 - (delta * 0.65), 0.5));
+            ball.velocity.multiply(Math.max(1 - (delta * 0.55), 0.5));
 
             for (let other of this._balls) {
                 if (other.id === ball.id) continue;
