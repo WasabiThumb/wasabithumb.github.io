@@ -88,6 +88,7 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         this._wallImage.startLoading();
         this._ceilingImageAlpha = 0;
         this._wallImageAlpha = 0;
+        this._ceilingScroll = 0;
     }
 
     render(param: ShowcaseSlideParameters, delta: number, age: number): void {
@@ -221,6 +222,7 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         return [ matrixX, matrixY ];
     }
 
+    private _ceilingScroll: number = 0;
     private _renderCamera(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, size: number, delta: number) {
         const grad = ctx.createLinearGradient(0, 0, 0, size);
         grad.addColorStop(0, RGB.toCSS(this._ceilingColor));
@@ -230,13 +232,15 @@ export default class MazeShowcaseSlide implements ShowcaseSlide {
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, size, size);
 
+        this._ceilingScroll = (this._ceilingScroll + delta * 0.125) % 1;
         if (this._ceilingImage.isAvailable()) {
             const img = this._ceilingImage.get();
             ctx.globalCompositeOperation = "multiply";
             this._ceilingImageAlpha = Math.min(this._ceilingImageAlpha + delta, 1);
             ctx.globalAlpha = this._ceilingImageAlpha;
             for (let y=0; y < size; y++) {
-                let imgY = ((y / (size - 1)) % 1) * (img.naturalHeight - 1);
+                let scroll: number = (y < size / 2) ? this._ceilingScroll : (1 - this._ceilingScroll);
+                let imgY = ((y / (size - 1) + scroll) % 1) * (img.naturalHeight - 1);
                 let distance = 1 - (Math.abs(y - (size * 0.5)) / (size * 0.5));
                 let width = (-1 / (distance - 2)) * img.naturalWidth;
                 let imgX = (img.naturalWidth - width) / 2;
