@@ -45,7 +45,14 @@ const Git = (() => {
             }),
             getHeadCommit: (async () => {
                 const ref = await currentBranchPromise;
-                const f = await fs.readFile(path.resolve(metaPath, ref), { encoding: 'utf8', flag: 'r' });
+                const fp = path.resolve(metaPath, ref);
+                try {
+                    await fs.access(fp, fs.constants.F_OK);
+                } catch (e) {
+                    console.warn("Failed to read git head file");
+                    return { sha: (() => "GHA-FALLBACK") };
+                }
+                const f = await fs.readFile(fp, { encoding: 'utf8', flag: 'r' });
                 return {
                     sha: (() => f.split(/\n|\r\n/i)[0])
                 }
