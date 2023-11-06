@@ -33,7 +33,7 @@ const Git = (() => {
                 await f.close();
             }
             console.warn("Failed to identify current branch");
-            return "dev";
+            return "refs/heads/dev";
         })();
 
         return {
