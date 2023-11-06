@@ -75,7 +75,7 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
         if (noWorker) {
             this._solver = new MetaBallsContourSolverImpl(CELL_SIZE, THRESHOLD, CONTOURS_BYTES);
         } else {
-            this._solver = new MetaBallsThreadPool(CELL_SIZE, THRESHOLD, CONTOURS_BYTES, 16);
+            this._solver = new MetaBallsThreadPool(CELL_SIZE, THRESHOLD, 16);
         }
     }
 

@@ -18,7 +18,7 @@
 // 0b(tl)(tr)(bl)(br)
 import {ContourPoint} from "./types";
 
-export const CONTOURS: ContourPoint[][] = [
+const CONTOURS: ContourPoint[][] = [
     [],
     [ [ 2, 3 ], [ 1, 3 ], 3 ], // br
     [ [ 0, 2 ], [ 2, 3 ], 2 ], // bl

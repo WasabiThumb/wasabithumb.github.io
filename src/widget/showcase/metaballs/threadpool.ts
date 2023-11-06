@@ -22,28 +22,49 @@ import {
     TransmitMetaBall
 } from "./types";
 import {MetaBallsContourSolver} from "./solver";
+import {CONTOURS_BYTES} from "./contourdata";
 
 type Poly = NPair[];
 
 export class MetaBallsThreadPool extends MetaBallsContourSolver {
 
+    private static _sharedBufferState: number = 0;
+    private static _sharedBuffer: SharedArrayBuffer | null = null;
+
+    private static _initSharedBuffer(): void {
+        if (this._sharedBufferState === 0) {
+            if (window.crossOriginIsolated) {
+                const sb = new SharedArrayBuffer(72);
+                (new Uint8Array(sb)).set(CONTOURS_BYTES);
+                this._sharedBuffer = sb;
+                this._sharedBufferState = 2;
+            } else {
+                this._sharedBufferState = 1;
+            }
+        }
+    }
+
+    private static _getSharedBuffer(): SharedArrayBuffer {
+        this._initSharedBuffer();
+        return this._sharedBuffer!;
+    }
+
+    private static _hasSharedBuffer(): boolean {
+        this._initSharedBuffer();
+        return this._sharedBufferState === 2;
+    }
+
+    private static _getMovableContoursBuffer(): ArrayBuffer | SharedArrayBuffer {
+        if (this._hasSharedBuffer()) return this._getSharedBuffer();
+        return new Uint8Array(CONTOURS_BYTES).buffer;
+    }
+
     readonly poolSize: number;
     readonly pool: Worker[] = [];
-    private readonly _sharedBuffer: SharedArrayBuffer | null;
-    private readonly _hasSharedBuffer: boolean;
     private _active: boolean = true;
     private readonly _jobs: { id: number, callback: ((message: MetaBallsWorkerPolygonsMessage) => void) }[][] = [];
-    constructor(cellSize: number, threshold: number, contours: Uint8Array, poolSize: number) {
-        super(cellSize, threshold, contours);
-        if (window.crossOriginIsolated) {
-            const buf = new SharedArrayBuffer(72);
-            (new Uint8Array(buf)).set(contours);
-            this._sharedBuffer = buf;
-            this._hasSharedBuffer = true;
-        } else {
-            this._sharedBuffer = null;
-            this._hasSharedBuffer = false;
-        }
+    constructor(cellSize: number, threshold: number, poolSize: number) {
+        super(cellSize, threshold, CONTOURS_BYTES);
 
         poolSize = Math.max(poolSize, 1);
         this.poolSize = poolSize;
@@ -53,7 +74,7 @@ export class MetaBallsThreadPool extends MetaBallsContourSolver {
                 type: "init",
                 cellSize: this.cellSize,
                 threshold: this.threshold,
-                contours: this._hasSharedBuffer ? this._sharedBuffer! : new Uint8Array(this.contours).buffer
+                contours: MetaBallsThreadPool._getMovableContoursBuffer()
             };
             worker.postMessage(msg);
             this.pool[i] = worker;
