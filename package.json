@@ -23,6 +23,7 @@
     "@types/node": "^20.8.5",
     "@types/pbkdf2": "^3.1.0",
     "buffer": "^6.0.3",
+    "coi-serviceworker": "^0.1.7",
     "copy-webpack-plugin": "^11.0.0",
     "csso": "^5.0.5",
     "pbkdf2": "^3.1.2",

@@ -46,6 +46,10 @@ module.exports = (async () => {
                             }
                             return content;
                         })
+                    },
+                    {
+                        from: `node_modules/coi-serviceworker/coi-serviceworker${vd.mode === "production" ? ".min.js" : ".js"}`,
+                        to: path.resolve(__dirname, 'dist', 'assets', 'javascript', 'coi-serviceworker.js')
                     }
                 ]
             }),

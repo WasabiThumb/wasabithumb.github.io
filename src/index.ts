@@ -39,6 +39,7 @@ const loader: Loader = window.loader;
 loader.removeToken("bundle-load");
 loader.onLoad(() => {
     console.log(`Loaded Portfolio bundle v${LIB_VERSION}`);
+    if (window.crossOriginIsolated) alert("COI success!");
     if (LIB_VERSION.indexOf("git") >= 0) loader.forceLoad();
 });
 

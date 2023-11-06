@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "es6",
+    "module": "es2020",
     "target": "es5",
     "jsx": "react",
     "allowJs": true,
@@ -12,7 +12,9 @@
     "lib": [
       "es2015",
       "dom",
-      "scripthost"
+      "scripthost",
+      "es2017.sharedmemory",
+      "webworker"
     ]
   },
   "exclude": ["node_modules", "static", "dist", "private"]

@@ -18,39 +18,18 @@ import {Vector, Vector2} from "../../math/vector";
 import {ShowcaseSlide, ShowcaseSlideParameters} from "../showcase";
 import {CursorTracker} from "../../util/input";
 import {HSV, RGB} from "../../util/color";
+import {MetaBall, metaBallTransmit, NPair} from "./metaballs/types";
+import {BaseMetaBallsContourSolver, MetaBallsContourSolver, ThreadPoolMetaBallsContourSolver} from "./metaballs/solver";
+import {CONTOURS_BYTES} from "./metaballs/contourdata";
 
-// tl tr bl br
-// 0b(tl)(tr)(bl)(br)
-type CornerIndex = 0 | 1 | 2 | 3;
-type ContourPoint = [ CornerIndex, CornerIndex ] | CornerIndex;
-
-const CONTOURS: ContourPoint[][] = [
-    [],
-    [ [ 2, 3 ], [ 1, 3 ], 3 ], // br
-    [ [ 0, 2 ], [ 2, 3 ], 2 ], // bl
-    [ [ 0, 2 ], [ 1, 3 ], 3, 2 ], // bl br
-    [ [ 0, 1 ], [ 1, 3 ], 1 ], // tr
-    [ [ 0, 1 ], [ 2, 3 ], 3, 1 ], // tr br
-    [ [ 0, 2 ], [ 0, 1 ], 1, [ 1, 3 ], [ 2, 3 ], 2 ], // tr bl
-    [ [ 0, 2 ], [ 0, 1 ], 1, 3, 2 ], // tr bl br
-    [ 0, [ 0, 1 ], [ 0, 2 ] ], // tl
-    [ 0, [ 0, 1 ], [ 1, 3 ], 3, [ 2, 3 ], [ 0, 2 ] ], // tl br
-    [ 0, [ 0, 1 ], [ 2, 3 ], 2 ], // tl bl
-    [ 0, [ 0, 1 ], [ 1, 3 ], 3, 2 ], // tl bl br
-    [ 0, 1, [ 1, 3 ], [ 0, 2 ] ], // tl tr
-    [ [ 0, 2 ], 0, 1, 3, [ 2, 3 ] ], // tl tr br
-    [ 0, 1, [ 1, 3 ], [ 2, 3 ], 2 ], // tl tr bl
-    [ 0, 1, 3, 2 ] // tl tr bl br
-];
-const OFFSETS: Vector2[] = [
-    new Vector2(0, 0),
-    new Vector2(1, 0),
-    new Vector2(0, 1),
-    new Vector2(1, 1)
-];
-const CELL_SIZE: number = 18;
+const isFirefox: boolean = (() => {
+    try {
+        return /firefox/i.test(window.navigator.userAgent);
+    } catch (e) { }
+    return false;
+})();
+const CELL_SIZE: number = isFirefox ? 18 : 4;
 const THRESHOLD: number = 0.02025;
-
 
 export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
 
@@ -60,6 +39,8 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
     private _ballColor: RGB = RGB.black();
     private _bgColor: RGB = RGB.black();
     private _transitionProgress: number = -6;
+    private _solver: MetaBallsContourSolver | null = null;
+    private _solvedPolys: NPair[][] = [];
 
     init(param: ShowcaseSlideParameters): void {
         const hue = Math.random();
@@ -78,10 +59,13 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
         }
         this._cursor = new CursorTracker();
         this._transitionProgress = -6;
-        this._stroking = false;
+        if (isFirefox) {
+            this._solver = new BaseMetaBallsContourSolver(CELL_SIZE, THRESHOLD, CONTOURS_BYTES);
+        } else {
+            this._solver = new ThreadPoolMetaBallsContourSolver(CELL_SIZE, THRESHOLD, CONTOURS_BYTES, 16);
+        }
     }
 
-    private _stroking: boolean = false;
     render(param: ShowcaseSlideParameters, delta: number, age: number): void {
         const { canvas, ctx } = param;
         const { width, height } = canvas;
@@ -114,116 +98,38 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
         fg.addColorStop(1, RGB.toCSS(RGB.lerp(this._ballColor, RGB.black(), 0.9)));
         ctx.fillStyle = fg;
 
+        let stroking: boolean = false;
         if (this._transitionProgress >= 0 && this._transitionProgress <= 1) {
             ctx.globalAlpha = 4 * Math.pow(this._transitionProgress - 0.5, 2);
         } else if (this._transitionProgress >= 6) {
-            this._stroking = true;
+            stroking = true;
             ctx.strokeStyle = `rgba(0,0,0,${Math.min(this._transitionProgress - 6, 1)})`;
         }
 
-        this._evalCache = {};
-        for (let y=0; y < cellCount; y++) {
-            let top: number = (y * CELL_SIZE) - padTop;
-            let bottom: number = top + CELL_SIZE;
-            if (bottom < 0) continue;
-            if (top > height) break;
+        const me = this;
+        const solver = this._solver!;
+        solver.startFrame(this._balls.map(metaBallTransmit), this._transitionProgress >= 0.5);
+        solver.solve(cellCount, [ padLeft, padTop ], [ width, height ]).then((polys) => {
+            me._solvedPolys = polys;
+        });
 
-            let stripeStart = -1;
-            let stripeEnd = 0;
-            const checkStripe = (() => {
-                if (stripeStart >= 0) {
-                    let ax = (stripeStart * CELL_SIZE) - padLeft;
-                    let bx = (stripeEnd * CELL_SIZE) - padLeft + CELL_SIZE;
+        for (let poly of this._solvedPolys) {
+            let point: NPair;
 
-                    ctx.beginPath();
-                    ctx.moveTo(ax, top);
-                    ctx.lineTo(bx, top);
-                    ctx.lineTo(bx, bottom);
-                    ctx.lineTo(ax, bottom);
-                    ctx.closePath();
-                    ctx.fill();
-                    if (this._stroking) ctx.stroke();
-                }
-                stripeStart = -1;
-            });
-
-            for (let x=0; x < cellCount; x++) {
-                let left: number = (x * CELL_SIZE) - padLeft;
-                let right: number = left + CELL_SIZE;
-                if (right < 0) continue;
-                if (left > width) break;
-
-                if (this._renderCell(ctx, new Vector2(left, top), new Vector2(right, bottom), new Vector2(x, y), cellCount)) {
-                    if (stripeStart < 0) stripeStart = x;
-                    stripeEnd = x;
-                } else {
-                    checkStripe();
-                }
+            point = poly[0];
+            ctx.beginPath();
+            ctx.moveTo(point[0], point[1]);
+            for (let i=1; i < poly.length; i++) {
+                point = poly[i];
+                ctx.lineTo(point[0], point[1]);
             }
-            checkStripe();
+            ctx.closePath();
+            ctx.fill();
+            if (stroking) ctx.stroke();
         }
+
         ctx.globalAlpha = 1;
         this._transitionProgress += delta * 2;
-    }
-
-    private _renderCell(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, canvasMins: Vector2, canvasMaxs: Vector2, gridPos: Vector2, gridSize: number): boolean {
-        let cornerWeights: number[] = [];
-        let flag: number = 0; // tl tr bl br
-        for (let i=0; i < 4; i++) {
-            let weight: number = this._evaluate(Vector.sum(gridPos, OFFSETS[i]), gridSize);
-            cornerWeights[i] = weight;
-            if (this._transitionProgress <= 0.5 ? weight >= THRESHOLD : weight <= THRESHOLD) flag |= (1 << (3 - i));
-        }
-        if (flag === 0) return false;
-        if (flag === 15) return true;
-
-        const contour: ContourPoint[] = CONTOURS[flag & 15];
-        let vectors: Vector2[] = [];
-        for (let point of contour) {
-            if (typeof point === "number") {
-                vectors.push(OFFSETS[point]);
-            } else {
-                let a: Vector2 = OFFSETS[point[0]];
-                let aw: number = cornerWeights[point[0]];
-                let b: Vector2 = OFFSETS[point[1]];
-                let bw: number = cornerWeights[point[1]];
-                let d: number = (THRESHOLD - aw) / (bw - aw);
-                vectors.push(Vector.lerp(a, b, d));
-            }
-        }
-
-        let point: Vector2 = Vector2.xyLerp(canvasMins, canvasMaxs, vectors[0]);
-        ctx.beginPath();
-        ctx.moveTo(point.x, point.y);
-        for (let i=1; i < vectors.length; i++) {
-            point = Vector2.xyLerp(canvasMins, canvasMaxs, vectors[i]);
-            ctx.lineTo(point.x, point.y);
-        }
-        ctx.closePath();
-        ctx.fill();
-        if (this._stroking) ctx.stroke();
-
-        return false;
-    }
-
-    private _evalCache: { [hash: number]: number } = {};
-    private _evaluate(gridPos: Vector2, gridSize: number): number {
-        let hash: number = ((gridPos.x & 0xffff) << 16) | (gridPos.y & 0xffff);
-        let value = this._evalCache[hash];
-        if (!!value) return value;
-
-        value = 0;
-        const pos: Vector2 = MetaBallsShowcaseSlide._gridToWorld(gridPos, gridSize);
-        for (let ball of this._balls) {
-            const d = Math.pow(pos.x - ball.pos.x, 2) + Math.pow(pos.y - ball.pos.y, 2);
-            if (d < 1e-9) {
-                value = Number.POSITIVE_INFINITY;
-                break;
-            }
-            value += ball.radius / d;
-        }
-        this._evalCache[hash] = value;
-        return value;
     }
 
     private _simulationStep(delta: number) {
@@ -260,17 +166,8 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
     destroy(): void {
         this._balls.splice(0);
         this._cursor!.stop();
-    }
-
-    private static _gridToWorld(gridPos: Vector2, gridSize: number): Vector2 {
-        return Vector.quotient(gridPos, gridSize).multiply(100);
+        this._solver!.dispose();
     }
 
 }
 
-type MetaBall = {
-    id: number,
-    pos: Vector2,
-    velocity: Vector2,
-    radius: number
-};
