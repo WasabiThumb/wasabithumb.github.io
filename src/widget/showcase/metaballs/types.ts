@@ -1,19 +1,12 @@
-import {Vector2} from "../../../math/vector";
 
 export type NPair = [ number, number ];
 
-export type MetaBall = {
+export type TransmitMetaBall = {
     id: number,
-    pos: Vector2,
-    velocity: Vector2,
+    pos: NPair,
+    velocity: NPair,
     radius: number
 };
-export type TransmitMetaBall = { [P in keyof MetaBall]: MetaBall[P] extends Vector2 ? NPair : MetaBall[P] };
-export const metaBallTransmit: ((mb: MetaBall) => TransmitMetaBall) = ((mb) => {
-    const tf: ((vec: Vector2) => NPair) = (vec => [ vec.x, vec.y ]);
-    return { ...mb, pos: tf(mb.pos), velocity: tf(mb.velocity) };
-});
-
 
 export type CornerIndex = 0 | 1 | 2 | 3;
 export type ContourPoint = [ CornerIndex, CornerIndex ] | CornerIndex;

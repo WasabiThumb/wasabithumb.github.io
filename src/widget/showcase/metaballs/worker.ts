@@ -1,16 +1,16 @@
-import {BaseMetaBallsContourSolver} from "./solver";
+import {MetaBallsContourSolverImpl} from "./solver";
 import {MetaBallsWorkerMessage, MetaBallsWorkerPolygonsMessage, NPair} from "./types";
 
 typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope && (() => {
 
-    let solver: BaseMetaBallsContourSolver | null = null;
+    let solver: MetaBallsContourSolverImpl | null = null;
     let init: boolean = false;
 
     self.onmessage = ((event: MessageEvent) => {
         const dat = event.data as MetaBallsWorkerMessage;
         switch (dat.type) {
             case "init":
-                solver = new BaseMetaBallsContourSolver(dat.cellSize, dat.threshold, new Uint8Array(dat.contours));
+                solver = new MetaBallsContourSolverImpl(dat.cellSize, dat.threshold, new Uint8Array(dat.contours));
                 init = true;
                 break;
             case "frame":

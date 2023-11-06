@@ -18,17 +18,30 @@ import {Vector, Vector2} from "../../math/vector";
 import {ShowcaseSlide, ShowcaseSlideParameters} from "../showcase";
 import {CursorTracker} from "../../util/input";
 import {HSV, RGB} from "../../util/color";
-import {MetaBall, metaBallTransmit, NPair} from "./metaballs/types";
-import {BaseMetaBallsContourSolver, MetaBallsContourSolver, ThreadPoolMetaBallsContourSolver} from "./metaballs/solver";
+import {NPair, TransmitMetaBall} from "./metaballs/types";
+import {MetaBallsContourSolverImpl, MetaBallsContourSolver} from "./metaballs/solver";
+import {MetaBallsThreadPool} from "./metaballs/threadpool";
 import {CONTOURS_BYTES} from "./metaballs/contourdata";
 
-const isFirefox: boolean = (() => {
+type MetaBall = {
+    id: number,
+    pos: Vector2,
+    velocity: Vector2,
+    radius: number
+};
+const metaBallTransmit: ((mb: MetaBall) => TransmitMetaBall) = ((mb) => {
+    const tf: ((vec: Vector2) => NPair) = (vec => [ vec.x, vec.y ]);
+    return { ...mb, pos: tf(mb.pos), velocity: tf(mb.velocity) };
+});
+
+const noWorker: boolean = (() => {
+    if (typeof Worker !== "function") return true;
     try {
         return /firefox/i.test(window.navigator.userAgent);
     } catch (e) { }
     return false;
 })();
-const CELL_SIZE: number = isFirefox ? 18 : 4;
+const CELL_SIZE: number = noWorker ? 18 : 4;
 const THRESHOLD: number = 0.02025;
 
 export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
@@ -59,10 +72,10 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
         }
         this._cursor = new CursorTracker();
         this._transitionProgress = -6;
-        if (isFirefox) {
-            this._solver = new BaseMetaBallsContourSolver(CELL_SIZE, THRESHOLD, CONTOURS_BYTES);
+        if (noWorker) {
+            this._solver = new MetaBallsContourSolverImpl(CELL_SIZE, THRESHOLD, CONTOURS_BYTES);
         } else {
-            this._solver = new ThreadPoolMetaBallsContourSolver(CELL_SIZE, THRESHOLD, CONTOURS_BYTES, 16);
+            this._solver = new MetaBallsThreadPool(CELL_SIZE, THRESHOLD, CONTOURS_BYTES, 16);
         }
     }
 
