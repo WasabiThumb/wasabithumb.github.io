@@ -32,7 +32,8 @@ const Git = (() => {
             } finally {
                 await f.close();
             }
-            throw new Error("Failed to identify current branch");
+            console.warn("Failed to identify current branch");
+            return "dev";
         })();
 
         return {
