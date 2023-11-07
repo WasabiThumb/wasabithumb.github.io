@@ -34,10 +34,13 @@ const patchSourceFile = ((dir, file) => {
     while ((read = fs.readSync(fd, head, cursor, CHUNK_SIZE - cursor)) > 0) {
         if (cursor === 0) {
             // if the first character is a forward slash assume the notice is already included
-            if (head[0] === 0x2F) return;
+            if (head[0] === 0x2F) {
+                fs.closeSync(fd);
+                return;
+            }
         }
         cursor += read;
-        if (cursor >= 8192) {
+        if (cursor >= CHUNK_SIZE) {
             chunks.push(head);
             head = Buffer.allocUnsafe(CHUNK_SIZE);
             cursor = 0;

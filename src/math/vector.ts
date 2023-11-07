@@ -46,6 +46,10 @@ export abstract class Vector {
         }
     }
 
+    protected setComponentsUnsafe(components: number[]) {
+        this._components = components;
+    }
+
     getComponent(index: number): number {
         if (index < 0 || index >= this.dimensions) throw new Error(`Index ${index} out of bounds for ${this.dimensions}-dimensional vector`);
         return this._components[index];
@@ -77,17 +81,17 @@ export abstract class Vector {
         return Math.sqrt(sqr);
     }
 
-    normalize(): this {
+    normalize<T extends this>(): T {
         let norm: number = this.normSqr();
-        if (Math.abs(norm - 1) <= Number.EPSILON) return this;
-        if (Math.abs(norm) <= Number.EPSILON) return this;
+        if (Math.abs(norm - 1) <= Number.EPSILON) return this as T;
+        if (Math.abs(norm) <= Number.EPSILON) return this as T;
         norm = Math.sqrt(norm);
         for (let i=0; i < this._components.length; i++) this._components[i] = this._components[i] / norm;
         this._callOnModified();
-        return this;
+        return this as T;
     }
 
-    unary(other: Vector | number, operation: (a: number, b: number) => number): this {
+    unary<T extends this>(other: Vector | number, operation: (a: number, b: number) => number): T {
         try {
             const ac = this.components;
             if (typeof other === "object") {
@@ -100,11 +104,11 @@ export abstract class Vector {
         } finally {
             this._callOnModified();
         }
-        return this;
+        return this as T;
     }
 
-    add(other: Vector | number): this {
-        return this.unary(other, (a, b) => a + b);
+    add<T extends this>(other: Vector | number): T {
+        return this.unary(other, (a, b) => a + b) as T;
     }
 
     static sum<T extends Vector>(a: T, b: T | number): T {
@@ -113,7 +117,7 @@ export abstract class Vector {
         return ac;
     }
 
-    subtract(other: Vector | number): this {
+    subtract<T extends this>(other: Vector | number): T {
         return this.unary(other, (a, b) => a - b);
     }
 
@@ -123,7 +127,7 @@ export abstract class Vector {
         return ac;
     }
 
-    multiply(other: Vector | number): this {
+    multiply<T extends this>(other: Vector | number): T {
         return this.unary(other, (a, b) => a * b);
     }
 
@@ -133,7 +137,7 @@ export abstract class Vector {
         return ac;
     }
 
-    divide(other: Vector | number): this {
+    divide<T extends this>(other: Vector | number): T {
         return this.unary(other, (a, b) => a / b);
     }
 
@@ -162,10 +166,10 @@ export abstract class Vector {
         return sum;
     }
 
-    negate(): this {
+    negate<T extends this>(): T {
         for (let i=0; i < this._components.length; i++) this._components[i] = -this._components[i];
         this._callOnModified();
-        return this;
+        return this as T;
     }
 
 }
