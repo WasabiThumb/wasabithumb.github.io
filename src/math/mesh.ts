@@ -71,7 +71,7 @@ export class MeshBuilder {
             uvs = new Triangle(uvs[0], uvs[1], uvs[2]);
         }
         if (!normal) normal = vertices.computeCenter().normalize();
-        this._faces.push({ vertices, uvs, normal });
+        this._faces.push({ vertices: vertices.copy(), uvs, normal });
         return this;
     }
 
@@ -80,12 +80,12 @@ export class MeshBuilder {
         if (!uvs) uvs = [new Vector2(0, 0), new Vector2(1, 0), new Vector2(1, 1), new Vector2(0, 1)];
         if (!normal) normal = vertices.reduce((a, b) => Vector.sum(a, b)).divide(4).normalize();
         this._faces.push({
-            vertices: new Triangle<Vector3>(vertices[0], vertices[1], vertices[3]),
+            vertices: new Triangle<Vector3>(vertices[0].copy(), vertices[1].copy(), vertices[3].copy()),
             uvs: new Triangle<Vector2>(uvs[0], uvs[1], uvs[3]),
             normal
         });
         this._faces.push({
-            vertices: new Triangle<Vector3>(vertices[3], vertices[1], vertices[2]),
+            vertices: new Triangle<Vector3>(vertices[3].copy(), vertices[1].copy(), vertices[2].copy()),
             uvs: new Triangle<Vector2>(uvs[3], uvs[1], uvs[2]),
             normal
         });

@@ -21,9 +21,6 @@ import Quaternion from "../../math/quaternion";
 import {HSV, RGB} from "../../util/color";
 import {CursorTracker} from "../../util/input";
 
-function rotationFromPercentage(percent: number): Quaternion {
-    return Quaternion.yAxis(percent * Math.PI * 2);
-}
 
 type Solid = {
     mesh: Mesh,
@@ -33,7 +30,8 @@ type Solid = {
     orbitRadius: number,
     orbitRadians: number,
     color: RGB,
-    yOscillateOffset: number
+    yOscillateOffset: number,
+    wireframe: boolean
 };
 
 export default class PlatonicShowcaseSlide implements ShowcaseSlide {
@@ -56,6 +54,7 @@ export default class PlatonicShowcaseSlide implements ShowcaseSlide {
     }
 
     private _solids: Solid[] = [];
+    private _ball: Mesh = MeshGenerator.icoSphere(2).generate(2.5);
     private _lightDirection: Vector3 = new Vector3(0, 0, -1);
     private _cursor: CursorTracker | null = null;
     private _orbitRotation: number = -1;
@@ -70,14 +69,15 @@ export default class PlatonicShowcaseSlide implements ShowcaseSlide {
             const generator = MeshGenerator.PLATONICS[i];
             const orbitRadians: number = (i * Math.PI * 2) / MeshGenerator.PLATONICS.length;
             this._solids.push({
-                mesh: generator.generate(),
+                mesh: generator.generate(window.innerHeight > window.innerWidth ? 1.5 : 1),
                 rotationRadians: 0,
                 rotation: Quaternion.identity(),
                 orbitCenter,
                 orbitRadius: 8,
                 orbitRadians,
                 color: HSV.toRGB([ (i / MeshGenerator.PLATONICS.length), 1, 1 ]),
-                yOscillateOffset: Math.random() * 10
+                yOscillateOffset: Math.random() * 10,
+                wireframe: false
             });
         }
         this._cursor = new CursorTracker();
@@ -103,7 +103,7 @@ export default class PlatonicShowcaseSlide implements ShowcaseSlide {
         const orbitRotation = this._orbitRotation * delta;
 
         const meshRotation = delta * 2;
-        type DrawParams = { mesh: Mesh, scale: number, distance: number, color: RGB };
+        type DrawParams = { mesh: Mesh, scale: number, distance: number, color: RGB, wireframe: boolean };
         const draws: DrawParams[] = [];
         for (let solid of this._solids) {
             solid.orbitRadians += orbitRotation;
@@ -115,14 +115,21 @@ export default class PlatonicShowcaseSlide implements ShowcaseSlide {
             solid.rotationRadians += meshRotation;
             solid.rotation = Quaternion.yAxis(solid.rotationRadians);
 
-            draws.push({ mesh: solid.mesh.transformed(translation, solid.rotation), scale, distance: translation.z, color: solid.color });
+            draws.push({ mesh: solid.mesh.transformed(translation, solid.rotation), scale, distance: translation.z, color: solid.color, wireframe: solid.wireframe });
         }
+        draws.push({
+            mesh: this._ball.transformed(new Vector3(0, 0, 12), Quaternion.yAxis(age * 2)),
+            scale,
+            distance: 12,
+            color: [ 255, 255, 255 ],
+            wireframe: true
+        });
         draws.sort((a, b) => b.distance - a.distance);
 
 
         const transform = ctx.getTransform();
         ctx.setTransform(1, 0, 0, 1, -padLeft, -padTop);
-        for (let draw of draws) this._renderMesh(ctx, draw.mesh, draw.scale, draw.distance, draw.color);
+        for (let draw of draws) this._renderMesh(ctx, draw.mesh, draw.scale, draw.distance, draw.color, draw.wireframe);
         ctx.setTransform(transform);
     }
 
@@ -131,24 +138,26 @@ export default class PlatonicShowcaseSlide implements ShowcaseSlide {
         this._cursor!.stop();
     }
 
-    private _renderMesh(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, mesh: Mesh, scale: number, distance: number, color: RGB) {
-        const projected: MeshFace2D[] = mesh.getProjectedFaces((point) => this._project(point), new Vector3());
+    private _renderMesh(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, mesh: Mesh, scale: number, distance: number, color: RGB, wireframe: boolean) {
+        const projected: MeshFace2D[] = mesh.getProjectedFaces((point) => this._project(point), wireframe ? undefined : new Vector3());
         for (let i=0; i < projected.length; i++) {
             let face = projected[i];
-            let light: number = Math.min(Math.max(face.normal.dot(this._lightDirection), 0) * 0.25, 0.25) + 0.75;
-            light /= Math.max((distance - 2) * 0.35, 1);
+            let light: number = Math.min(Math.max(face.normal.dot(this._lightDirection), 0) * 0.75, 0.75) + 0.25;
+            if (!wireframe) {
+                light /= Math.max((distance - 2) * 0.35, 1);
+            }
 
             const { a, b, c } = face.vertices.update((v) => v.multiply(scale));
 
             const css = RGB.toCSS(RGB.lerp(RGB.black(), color, light));
-            ctx.fillStyle = css;
-            ctx.strokeStyle = css;
+            ctx.fillStyle = wireframe ? "black" : css;
+            ctx.strokeStyle = wireframe ? css : "black";
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
             ctx.lineTo(c.x, c.y);
             ctx.closePath();
-            ctx.fill();
+            if (!wireframe) ctx.fill();
             ctx.stroke();
         }
     }
