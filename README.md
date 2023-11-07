@@ -19,6 +19,7 @@ npm run build
     - ``private.js`` **:** Provides functionality for ``private``. See [below](#static-private-desc).
     - ``versioning.js`` **:** Incorporates the current version data into Source before building so that the built site can reference it.
       Also switches ``webpack`` into development mode when checked out to a non-master branch, allowing faster but larger builds.
+    - ``copyright.js`` **:** Ensures that ``src`` files contain the Apache-2.0 License copyright notice.
 - **Source** <br> Site dynamic functionality made in TypeScript. Must be compiled using the build script to run.
   - ``src``
 - **Static** <br> Site textual content, metadata & styling.

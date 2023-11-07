@@ -6,6 +6,7 @@ canvas.main-showcase {
     width: 77.5vw;
     width: calc(100vw - (min(25vw, 55vh) * 0.9));
     height: 100vh;
+    height: var(--dyn-max-height);
     z-index: 1;
 }
 
@@ -16,6 +17,7 @@ canvas.main-showcase {
     width: 25vw;
     width: min(25vw, 55vh);
     height: 100vh;
+    height: var(--dyn-max-height);
     left: 75vw;
     left: calc(100vw - min(25vw, 55vh));
     top: 0;
@@ -103,13 +105,16 @@ canvas.main-showcase {
     canvas.main-showcase {
         width: 100vw;
         height: 77.5vh;
+        height: calc(var(--dyn-max-height) * 0.775);
     }
 
     .nav-bar {
         width: 100vw;
         height: 25vh;
+        height: calc(var(--dyn-max-height) * 0.25);
         left: 0;
         top: 75vh;
+        top: 75dvh;
         clip-path: polygon(0 10%, 100% 0, 100% 100%, 0% 100%);
     }
 
@@ -118,7 +123,9 @@ canvas.main-showcase {
         flex-direction: row;
         margin-left: 0;
         margin-top: 2.5vh;
+        margin-top: calc(var(--dyn-max-height) * 0.025);
         height: 22.5vh;
+        height: calc(var(--dyn-max-height) * 0.225);
         width: 100%;
     }
 
@@ -126,7 +133,9 @@ canvas.main-showcase {
         width: unset;
         max-height: unset;
         height: 20vh;
+        height: calc(var(--dyn-max-height) * 0.2);
         margin: 2.5vh;
+        margin: calc(var(--dyn-max-height) * 0.025);
     }
 
     .nav-bar > .inner > nav {
@@ -152,6 +161,7 @@ canvas.main-showcase {
 
     .nav-bar > .inner > nav {
         font-size: 3.75vh; /* only real magic value in this whole layout */
+        font-size: calc(var(--dyn-max-height) * 0.0375);
     }
 
 }

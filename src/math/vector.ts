@@ -1,3 +1,19 @@
+/*
+   Copyright 2023 WasabiThumb
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 
 export abstract class Vector {
 
@@ -28,6 +44,10 @@ export abstract class Vector {
         } finally {
             this._callOnModified();
         }
+    }
+
+    protected setComponentsUnsafe(components: number[]) {
+        this._components = components;
     }
 
     getComponent(index: number): number {
@@ -61,17 +81,17 @@ export abstract class Vector {
         return Math.sqrt(sqr);
     }
 
-    normalize(): this {
+    normalize<T extends this>(): T {
         let norm: number = this.normSqr();
-        if (Math.abs(norm - 1) <= Number.EPSILON) return this;
-        if (Math.abs(norm) <= Number.EPSILON) return this;
+        if (Math.abs(norm - 1) <= Number.EPSILON) return this as T;
+        if (Math.abs(norm) <= Number.EPSILON) return this as T;
         norm = Math.sqrt(norm);
         for (let i=0; i < this._components.length; i++) this._components[i] = this._components[i] / norm;
         this._callOnModified();
-        return this;
+        return this as T;
     }
 
-    unary(other: Vector | number, operation: (a: number, b: number) => number): this {
+    unary<T extends this>(other: Vector | number, operation: (a: number, b: number) => number): T {
         try {
             const ac = this.components;
             if (typeof other === "object") {
@@ -84,11 +104,11 @@ export abstract class Vector {
         } finally {
             this._callOnModified();
         }
-        return this;
+        return this as T;
     }
 
-    add(other: Vector | number): this {
-        return this.unary(other, (a, b) => a + b);
+    add<T extends this>(other: Vector | number): T {
+        return this.unary(other, (a, b) => a + b) as T;
     }
 
     static sum<T extends Vector>(a: T, b: T | number): T {
@@ -97,7 +117,7 @@ export abstract class Vector {
         return ac;
     }
 
-    subtract(other: Vector | number): this {
+    subtract<T extends this>(other: Vector | number): T {
         return this.unary(other, (a, b) => a - b);
     }
 
@@ -107,7 +127,7 @@ export abstract class Vector {
         return ac;
     }
 
-    multiply(other: Vector | number): this {
+    multiply<T extends this>(other: Vector | number): T {
         return this.unary(other, (a, b) => a * b);
     }
 
@@ -117,7 +137,7 @@ export abstract class Vector {
         return ac;
     }
 
-    divide(other: Vector | number): this {
+    divide<T extends this>(other: Vector | number): T {
         return this.unary(other, (a, b) => a / b);
     }
 
@@ -146,10 +166,10 @@ export abstract class Vector {
         return sum;
     }
 
-    negate(): this {
+    negate<T extends this>(): T {
         for (let i=0; i < this._components.length; i++) this._components[i] = -this._components[i];
         this._callOnModified();
-        return this;
+        return this as T;
     }
 
 }

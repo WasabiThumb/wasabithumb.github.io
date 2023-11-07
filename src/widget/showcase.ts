@@ -22,6 +22,7 @@ import PerformanceShowcaseSlide from "./showcase/performance";
 import PlanetsShowcaseSlide from "./showcase/planets";
 import MazeShowcaseSlide from "./showcase/maze";
 import MetaBallsShowcaseSlide from "./showcase/metaballs";
+import PlatonicShowcaseSlide from "./showcase/platonic";
 
 const TRANSITION_PERIOD: number = 1;
 const STAY_PERIOD: number = 8; // must be greater than transition time, time in transition counts towards the age of the next slide
@@ -223,6 +224,7 @@ const SLIDES: ShowcaseSlideRegistry = [
     PlanetsShowcaseSlide,
     MazeShowcaseSlide,
     MetaBallsShowcaseSlide,
+    PlatonicShowcaseSlide
 ];
 
 const randomSlide: (() => ShowcaseSlide) = (() => {

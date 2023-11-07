@@ -1,16 +1,18 @@
 {
   "name": "portfolio",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Wasabi's Portfolio",
   "private": true,
   "scripts": {
     "pack-private": "node buildSrc/private.js",
     "git-add-private": "git add static/\\*.private",
+    "check-copyright": "node buildSrc/copyright.js",
     "build": "webpack"
   },
   "pre-commit": [
     "pack-private",
-    "git-add-private"
+    "git-add-private",
+    "check-copyright"
   ],
   "author": "WasabiThumb",
   "license": "Apache-2.0",
@@ -23,6 +25,7 @@
     "@types/node": "^20.8.5",
     "@types/pbkdf2": "^3.1.0",
     "buffer": "^6.0.3",
+    "coi-serviceworker": "^0.1.7",
     "copy-webpack-plugin": "^11.0.0",
     "csso": "^5.0.5",
     "pbkdf2": "^3.1.2",
