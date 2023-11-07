@@ -28,37 +28,37 @@ export default class CubeMeshGenerator implements MeshGenerator {
             new Vector3(R3_3, R3_3, -R3_3),
             new Vector3(R3_3, -R3_3, -R3_3),
             new Vector3(-R3_3, -R3_3, -R3_3)
-        ]);
+        ], undefined, new Vector3(0, 0, -1));
         mb.addQuad([ // +Z
             new Vector3(R3_3, R3_3, R3_3),
             new Vector3(-R3_3, R3_3, R3_3),
             new Vector3(-R3_3, -R3_3, R3_3),
             new Vector3(R3_3, -R3_3, R3_3)
-        ]);
+        ], undefined, new Vector3(0, 0, 1));
         mb.addQuad([ // +Y
             new Vector3(-R3_3, R3_3, R3_3),
             new Vector3(R3_3, R3_3, R3_3),
             new Vector3(R3_3, R3_3, -R3_3),
             new Vector3(-R3_3, R3_3, -R3_3)
-        ]);
+        ], undefined, new Vector3(0, 1, 0));
         mb.addQuad([ // -Y
             new Vector3(-R3_3, -R3_3, -R3_3),
             new Vector3(R3_3, -R3_3, -R3_3),
             new Vector3(R3_3, -R3_3, R3_3),
             new Vector3(-R3_3, -R3_3, R3_3)
-        ]);
+        ], undefined, new Vector3(0, -1, 0));
         mb.addQuad([ // -X
             new Vector3(-R3_3, R3_3, R3_3),
             new Vector3(-R3_3, R3_3, -R3_3),
             new Vector3(-R3_3, -R3_3, -R3_3),
             new Vector3(-R3_3, -R3_3, R3_3)
-        ]);
+        ], undefined, new Vector3(-1, 0, 0));
         mb.addQuad([ // +X
             new Vector3(R3_3, R3_3, -R3_3),
             new Vector3(R3_3, R3_3, R3_3),
             new Vector3(R3_3, -R3_3, R3_3),
             new Vector3(R3_3, -R3_3, -R3_3)
-        ]);
+        ], undefined, new Vector3(1, 0, 0));
 
         return mb.scale(scale).build();
     }

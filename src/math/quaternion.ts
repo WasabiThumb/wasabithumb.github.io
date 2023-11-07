@@ -87,6 +87,17 @@ export default class Quaternion extends Vector {
         return ret;
     }
 
+    static yAxis(angle: number): Quaternion {
+        angle *= 0.5;
+        return new Quaternion(
+            Math.cos(angle),
+            0,
+            Math.sin(angle),
+            0,
+            QuaternionFlags.UNIT
+        );
+    }
+
     readonly dimensions: number = 4;
     private _flags: number = 0;
     constructor(w: number = 1, x: number = 0, y: number = 0, z: number = 0, flags?: number) {
