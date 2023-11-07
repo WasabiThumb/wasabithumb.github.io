@@ -23,7 +23,7 @@ export default class TetrahedronMeshGenerator implements MeshGenerator {
     generate(scale: Vector3 | number = 1): Mesh {
         const mb = new MeshBuilder();
 
-        const base: Vector3[] = [ // tl tr br bl
+        const base = [ // tl tr br bl
             new Vector3(-R3_3, -R3_3, -R3_3),
             new Vector3(R3_3, -R3_3, -R3_3),
             new Vector3(R3_3, -R3_3, R3_3),

@@ -53,9 +53,9 @@ export class Triangle<T extends Vector2 | Vector3> {
     map<V extends Vector2 | Vector3>(operator: (point: T) => V): Triangle<V> {
         const points: V[] = this.toArray().map(operator);
         if (points[0].dimensions === 3) {
-            return new Triangle<Vector3>(...(points as Vector3[])) as Triangle<V>;
+            return new Triangle<Vector3>(points[0] as Vector3, points[1] as Vector3, points[2] as Vector3) as Triangle<V>;
         } else {
-            return new Triangle<Vector2>(...(points as Vector2[])) as Triangle<V>;
+            return new Triangle<Vector2>(points[0] as Vector2, points[1] as Vector2, points[2] as Vector2) as Triangle<V>;
         }
     }
 
@@ -97,11 +97,16 @@ export class Triangle<T extends Vector2 | Vector3> {
     }
 
     computeCenter(): T {
-        return this.toArray().reduce((a, b) => Vector.sum(a, b) as T).divide(3);
+        return Vector.quotient(this.toArray().reduce((a, b) => Vector.sum(a, b) as T), 3);
     }
 
     sqrDistFrom(point: T): number {
-        const ray = this.computeCenter().subtract(point);
+        const ray = this.computeCenter();
+        ray.x -= point.x;
+        ray.y -= point.y;
+        if (ray.dimensions === 3 && point.dimensions === 3) {
+            (ray as Vector3).z -= (point as Vector3).z;
+        }
         return ray.normSqr();
     }
 

@@ -63,12 +63,12 @@ export class MeshBuilder {
     private _faces: MeshFace[] = [];
     constructor() { }
 
-    addFace(vertices: Tri | [Vector3, Vector3, Vector3], uvs?: Tri2D | [Vector2, Vector2, Vector2], normal?: Vector3): MeshBuilder {
-        if (Array.isArray(vertices)) vertices = new Triangle(...vertices);
+    addFace(vertices: Tri | Vector3[], uvs?: Tri2D | Vector2[], normal?: Vector3): MeshBuilder {
+        if (Array.isArray(vertices)) vertices = new Triangle(vertices[0], vertices[1], vertices[2]);
         if (!uvs) {
             uvs = Tri2D.defaultUV();
         } else if (Array.isArray(uvs)) {
-            uvs = new Triangle(...uvs);
+            uvs = new Triangle(uvs[0], uvs[1], uvs[2]);
         }
         if (!normal) normal = vertices.computeCenter().normalize();
         this._faces.push({ vertices, uvs, normal });
@@ -76,7 +76,7 @@ export class MeshBuilder {
     }
 
     // general contract: tl tr br bl
-    addQuad(vertices: [Vector3, Vector3, Vector3, Vector3], uvs?: [Vector2, Vector2, Vector2, Vector2], normal?: Vector3): MeshBuilder {
+    addQuad(vertices: Vector3[], uvs?: Vector2[], normal?: Vector3): MeshBuilder {
         if (!uvs) uvs = [new Vector2(0, 0), new Vector2(1, 0), new Vector2(1, 1), new Vector2(0, 1)];
         if (!normal) normal = vertices.reduce((a, b) => Vector.sum(a, b)).divide(4).normalize();
         this._faces.push({
@@ -112,4 +112,36 @@ export interface MeshGenerator {
 
     generate(scale?: Vector3 | number): Mesh;
 
+}
+
+import TetrahedronMeshGenerator from "./mesh/tetrahedron";
+import CubeMeshGenerator from "./mesh/cube";
+import OctahedronMeshGenerator from "./mesh/octahedron";
+import DodecahedronMeshGenerator from "./mesh/dodecahedron";
+import IcosahedronMeshGenerator from "./mesh/icosahedron";
+import IcoSphereMeshGenerator from "./mesh/icosphere";
+export namespace MeshGenerator {
+    export const TETRAHEDRON = new TetrahedronMeshGenerator();
+    export const CUBE = new CubeMeshGenerator();
+    export const OCTAHEDRON = new OctahedronMeshGenerator();
+    export const DODECAHEDRON = new DodecahedronMeshGenerator();
+    export const ICOSAHEDRON = new IcosahedronMeshGenerator();
+
+    export const PLATONICS: [
+        TetrahedronMeshGenerator,
+        CubeMeshGenerator,
+        OctahedronMeshGenerator,
+        DodecahedronMeshGenerator,
+        IcosahedronMeshGenerator
+    ] = [
+        TETRAHEDRON,
+        CUBE,
+        OCTAHEDRON,
+        DODECAHEDRON,
+        ICOSAHEDRON
+    ];
+
+    export function icoSphere(subdivisions: number = 4, halfUV: boolean = false): IcoSphereMeshGenerator {
+        return new IcoSphereMeshGenerator(subdivisions, halfUV);
+    }
 }

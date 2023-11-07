@@ -153,11 +153,6 @@ export default class Quaternion extends Vector {
         return (this._flags & QuaternionFlags.IDENTITY) !== 0;
     }
 
-    normalize<T extends this>(): T {
-        if (this.isUnit()) return this as T;
-        return super.normalize();
-    }
-
     protected _callOnModified() {
         this._flags = 0;
         if (Math.abs(this.normSqr() - 1) <= 1e-9) {
@@ -187,18 +182,15 @@ export default class Quaternion extends Vector {
             .add(u.cross(v).multiply(s * 2));
     }
 
-    multiply<T extends this>(b: Vector | number): T {
-        if (typeof b === "object" && b instanceof Quaternion) {
-            const { w, x, y, z } = this;
-            return new Quaternion(
-                w * b.w - x * b.x - y * b.y - z * b.z,
-                w * b.x + x * b.w + y * b.z - z * b.y,
-                w * b.y - x * b.z + y * b.w + z * b.x,
-                w * b.z + x * b.y - y * b.x + z * b.w,
-                this._flags | b._flags
-            ) as T;
-        }
-        return super.multiply(b);
+    mult(b: Quaternion): Quaternion {
+        const { w, x, y, z } = this;
+        return new Quaternion(
+            w * b.w - x * b.x - y * b.y - z * b.z,
+            w * b.x + x * b.w + y * b.z - z * b.y,
+            w * b.y - x * b.z + y * b.w + z * b.x,
+            w * b.z + x * b.y - y * b.x + z * b.w,
+            this._flags | b._flags
+        );
     }
 
     inverse(): Quaternion {

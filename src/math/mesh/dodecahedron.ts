@@ -56,9 +56,14 @@ export default class DodecahedronMeshGenerator implements MeshGenerator {
         const mb = new MeshBuilder();
 
         for (let i=0; i < 12; i++) {
-            const vertices: DDHFaceVertices = DDH_VERTEX_INDICES[i].map<Vector3>((n) => {
-                return DDH_VERTEX_DATA[n];
-            });
+            const indices: DDHFaceIndices = DDH_VERTEX_INDICES[i];
+            const vertices: DDHFaceVertices = [
+                DDH_VERTEX_DATA[indices[0]],
+                DDH_VERTEX_DATA[indices[1]],
+                DDH_VERTEX_DATA[indices[2]],
+                DDH_VERTEX_DATA[indices[3]],
+                DDH_VERTEX_DATA[indices[4]]
+            ];
             const center = vertices.reduce((a, b) => Vector.sum(a, b)).divide(5);
             const normal = center.normalize();
 

@@ -41,7 +41,7 @@ export default class IcoSphereMeshGenerator implements MeshGenerator {
 
         let tris: Tris = [];
         for (let triple of ICO_VERTEX_INDICES) {
-            tris.push(triple.map<Vector3>((idx) => ICO_VERTEX_DATA[idx]));
+            tris.push([ ICO_VERTEX_DATA[triple[0]], ICO_VERTEX_DATA[triple[1]], ICO_VERTEX_DATA[triple[2]] ]);
         }
         for (let i = 0; i < this._subdivisions; i++) tris = IcoSphereMeshGenerator._subdivide(tris);
         for (let i = 0; i < tris.length; i++) {
