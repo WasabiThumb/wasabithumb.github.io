@@ -65,7 +65,10 @@ module.exports = (async () => {
         },
         output: {
             filename: 'bundle.js',
-            path: dist
+            path: dist,
+            chunkFilename: (pathData) => {
+                return vd.mode === "production" ? '[contenthash].bundle.js' : '[name].bundle.js'
+            }
         }
     };
 });
