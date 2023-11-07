@@ -6,11 +6,13 @@
   "scripts": {
     "pack-private": "node buildSrc/private.js",
     "git-add-private": "git add static/\\*.private",
+    "check-copyright": "node buildSrc/copyright.js",
     "build": "webpack"
   },
   "pre-commit": [
     "pack-private",
-    "git-add-private"
+    "git-add-private",
+    "check-copyright"
   ],
   "author": "WasabiThumb",
   "license": "Apache-2.0",
