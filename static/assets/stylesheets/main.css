@@ -1,9 +1,13 @@
 @import "font.css";
 
+:root {
+    --dyn-max-height: 100dvh;
+}
+
 html, body {
     width: 100vw;
     height: 100vh;
-    height: 100dvh;
+    height: var(--dyn-max-height);
     position: absolute;
     top: 0;
     left: 0;
@@ -19,7 +23,7 @@ html, body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    height: 100dvh;
+    height: var(--dyn-max-height);
     z-index: 999;
     background: black;
     color: #efefef;
@@ -75,7 +79,7 @@ html, body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    height: 100dvh;
+    height: var(--dyn-max-height);
     z-index: 200;
     pointer-events: none;
     opacity: 0;
@@ -97,7 +101,7 @@ html, body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    height: 100dvh;
+    height: var(--dyn-max-height);
     pointer-events: initial;
     background-color: rgba(0, 0, 0, 0);
     transition-property: background-color;
