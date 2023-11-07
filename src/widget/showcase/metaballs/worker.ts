@@ -17,7 +17,7 @@
 import {MetaBallsContourSolverImpl} from "./solver";
 import {MetaBallsWorkerMessage, MetaBallsWorkerPolygonsMessage, NPair} from "./types";
 
-typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope && (() => {
+(!self.document) && (() => {
 
     let solver: MetaBallsContourSolverImpl | null = null;
     let init: boolean = false;
