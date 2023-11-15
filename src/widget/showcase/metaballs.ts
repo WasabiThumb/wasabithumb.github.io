@@ -54,6 +54,7 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
     private _transitionProgress: number = -6;
     private _solver: MetaBallsContourSolver | null = null;
     private _solvedPolys: NPair[][] = [];
+    private _jobPending: boolean = false;
 
     init(param: ShowcaseSlideParameters): void {
         const hue = Math.random();
@@ -77,6 +78,7 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
         } else {
             this._solver = new MetaBallsThreadPool(CELL_SIZE, THRESHOLD, 16);
         }
+        this._jobPending = false;
     }
 
     render(param: ShowcaseSlideParameters, delta: number, age: number): void {
@@ -119,12 +121,16 @@ export default class MetaBallsShowcaseSlide implements ShowcaseSlide {
             ctx.strokeStyle = `rgba(0,0,0,${Math.min(this._transitionProgress - 6, 1)})`;
         }
 
-        const me = this;
-        const solver = this._solver!;
-        solver.startFrame(this._balls.map(metaBallTransmit), this._transitionProgress >= 0.5);
-        solver.solve(cellCount, [ padLeft, padTop ], [ width, height ]).then((polys) => {
-            me._solvedPolys = polys;
-        });
+        if (!this._jobPending) {
+            this._jobPending = true;
+            const me = this;
+            const solver = this._solver!;
+            solver.startFrame(this._balls.map(metaBallTransmit), this._transitionProgress >= 0.5);
+            solver.solve(cellCount, [padLeft, padTop], [width, height]).then((polys) => {
+                me._solvedPolys = polys;
+                me._jobPending = false;
+            });
+        }
 
         for (let poly of this._solvedPolys) {
             let point: NPair;
