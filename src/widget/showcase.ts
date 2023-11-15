@@ -16,13 +16,12 @@
 
 import {PageWidget, PageWidgetType} from "../struct/widget";
 import {Page} from "../struct/page";
-import TestShowcaseSlide from "./showcase/test";
 import {LIB_VERSION} from "../util/version";
-import PerformanceShowcaseSlide from "./showcase/performance";
 import PlanetsShowcaseSlide from "./showcase/planets";
 import MazeShowcaseSlide from "./showcase/maze";
 import MetaBallsShowcaseSlide from "./showcase/metaballs";
 import PlatonicShowcaseSlide from "./showcase/platonic";
+import ConvolutionShowcaseSlide from "./showcase/convolution";
 
 const TRANSITION_PERIOD: number = 1;
 const STAY_PERIOD: number = 8; // must be greater than transition time, time in transition counts towards the age of the next slide
@@ -224,7 +223,8 @@ const SLIDES: ShowcaseSlideRegistry = [
     PlanetsShowcaseSlide,
     MazeShowcaseSlide,
     MetaBallsShowcaseSlide,
-    PlatonicShowcaseSlide
+    PlatonicShowcaseSlide,
+    ConvolutionShowcaseSlide
 ];
 
 const randomSlide: (() => ShowcaseSlide) = (() => {

@@ -1,6 +1,6 @@
 {
   "name": "portfolio",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "Wasabi's Portfolio",
   "private": true,
   "scripts": {
@@ -28,6 +28,7 @@
     "coi-serviceworker": "^0.1.7",
     "copy-webpack-plugin": "^11.0.0",
     "csso": "^5.0.5",
+    "ieee754": "^1.2.1",
     "pbkdf2": "^3.1.2",
     "pre-commit": "^1.2.2",
     "ts-loader": "^9.5.0",
