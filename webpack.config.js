@@ -50,6 +50,10 @@ module.exports = (async () => {
                     {
                         from: `node_modules/coi-serviceworker/coi-serviceworker${vd.mode === "production" ? ".min.js" : ".js"}`,
                         to: path.resolve(__dirname, 'dist', 'assets', 'javascript', 'coi-serviceworker.js')
+                    },
+                    {
+                        from: `node_modules/howler/dist/howler${vd.mode === "production" ? ".core.min.js" : ".js"}`,
+                        to: path.resolve(__dirname, 'dist', 'assets', 'javascript', 'howler.js')
                     }
                 ]
             }),
@@ -69,6 +73,7 @@ module.exports = (async () => {
             chunkFilename: (pathData) => {
                 return vd.mode === "production" ? '[contenthash].bundle.js' : '[name].bundle.js'
             }
-        }
+        },
+        externals: /^(howler|howl)$/i
     };
 });

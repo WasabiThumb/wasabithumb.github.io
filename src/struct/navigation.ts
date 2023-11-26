@@ -218,6 +218,7 @@ export default class Navigator {
 
     private _transitionStop() {
         this._txControl.stop();
+        Howler.unload();
     }
 
     private readonly _swapFadeControllers: FadeController[] = [];
