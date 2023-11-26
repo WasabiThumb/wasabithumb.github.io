@@ -16,6 +16,7 @@
 
 import {PageWidget, PageWidgetRef, PageWidgets, PageWidgetType} from "./widget";
 import RenderDispatch from "../util/render";
+import Navigator from "./navigation";
 
 export interface IPage {
 
@@ -43,6 +44,7 @@ export interface IPage {
 
 export class Page implements IPage {
 
+    readonly navigator: Navigator;
     readonly id: string;
     readonly root: HTMLElement;
     private readonly _widgets: PageWidget[];
@@ -50,7 +52,8 @@ export class Page implements IPage {
     private _open: boolean = false;
     private _renderDispatch: RenderDispatch = RenderDispatch.null();
 
-    constructor(id: string, root: HTMLElement, widgets: PageWidgetRef[] = []) {
+    constructor(navigator: Navigator, id: string, root: HTMLElement, widgets: PageWidgetRef[] = []) {
+        this.navigator = navigator;
         this.id = id;
         this.root = root;
 

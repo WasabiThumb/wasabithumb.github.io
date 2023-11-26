@@ -54,7 +54,7 @@ module.exports = (async () => {
                 ]
             }),
             new webpack.BannerPlugin({
-                banner: `Portfolio v. ${vd.version}\nWith <3 By Wasabi`
+                banner: `Portfolio v. ${vd.version}\nWith <3 By Wasabi\nApache-2.0 License`
             })
         ],
         resolve: {

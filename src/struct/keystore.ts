@@ -40,6 +40,9 @@ export default class KeyStore {
         return null;
     }
 
+    /**
+     * DO NOT ALLOW CALLING THIS METHOD IF PROTOCOL IS NOT HTTPS
+     */
     static async login(password: string, progress?: (message: string) => void): Promise<Uint8Array | null> {
         const doProgress: boolean = typeof progress === "function";
         if (doProgress) progress!("Generating key");
