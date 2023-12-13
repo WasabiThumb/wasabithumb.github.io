@@ -58,7 +58,13 @@ export default class KeyStore {
         });
 
         if (doProgress) progress!("Verifying key");
-        const stored: string = await request.getPrivate("./key", key);
+        let stored: string;
+        try {
+            stored = await request.getPrivate("./key", key);
+        } catch (e) {
+            console.warn(e);
+            return null;
+        }
         if (stored !== password) throw new Error(`Illegal key configuration (stored: ${stored}, provided: ${password})`);
 
         if (doProgress) progress!("Storing key");

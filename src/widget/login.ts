@@ -14,5 +14,24 @@
    limitations under the License.
 */
 
-// This file will be dynamically filled with the correct version string when the project is built.
-export const LIB_VERSION: string = "1.1.3-git-36989ca";
+import {PageWidget, PageWidgetType} from "../struct/widget";
+import {Page} from "../struct/page";
+
+export default class LoginPageWidget implements PageWidget {
+
+    readonly renders: boolean = false;
+    readonly type: PageWidgetType = "login";
+
+    init(page: Page): void {
+    }
+
+    refresh(page: Page): void {
+    }
+
+    render(page: Page, delta: number): void {
+    }
+
+    destroy(page: Page): void {
+    }
+
+}

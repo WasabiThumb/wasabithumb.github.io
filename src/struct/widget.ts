@@ -17,8 +17,9 @@
 import { Page } from "./page";
 import ShowcasePageWidget from "../widget/showcase";
 import ConstantsPageWidget from "../widget/constants";
+import LoginPageWidget from "../widget/login";
 
-export type PageWidgetType = "main-showcase" | "constants";
+export type PageWidgetType = "main-showcase" | "constants" | "login";
 
 export interface PageWidget {
 
@@ -49,6 +50,7 @@ export class PageWidgets {
         this.register(
             ShowcasePageWidget,
             ConstantsPageWidget,
+            LoginPageWidget,
         );
         this.INIT_DEFAULTS = true;
     }
