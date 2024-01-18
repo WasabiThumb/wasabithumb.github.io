@@ -74,6 +74,6 @@ module.exports = (async () => {
                 return vd.mode === "production" ? '[contenthash].bundle.js' : '[name].bundle.js'
             }
         },
-        externals: /^(howler|howl)$/i
+        externals: /^(howl)$/i
     };
 });

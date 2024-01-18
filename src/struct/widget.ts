@@ -18,8 +18,9 @@ import { Page } from "./page";
 import ShowcasePageWidget from "../widget/showcase";
 import ConstantsPageWidget from "../widget/constants";
 import LoginPageWidget from "../widget/login";
+import BackPageWidget from "../widget/back";
 
-export type PageWidgetType = "main-showcase" | "constants" | "login";
+export type PageWidgetType = "main-showcase" | "constants" | "login" | "back";
 
 export interface PageWidget {
 
@@ -51,6 +52,7 @@ export class PageWidgets {
             ShowcasePageWidget,
             ConstantsPageWidget,
             LoginPageWidget,
+            BackPageWidget,
         );
         this.INIT_DEFAULTS = true;
     }

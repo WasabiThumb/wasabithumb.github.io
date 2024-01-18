@@ -17,13 +17,20 @@
 import {PageWidget, PageWidgetType} from "../struct/widget";
 import {Page} from "../struct/page";
 
-export default class LoginPageWidget implements PageWidget {
+export default class BackPageWidget implements PageWidget {
 
+    readonly type: PageWidgetType = "back";
     readonly renders: boolean = false;
-    readonly type: PageWidgetType = "login";
 
     init(page: Page): void {
-        console.log("i'm useless");
+        const click = (() => {
+            page.navigator.goBack();
+        });
+
+        const buttons = page.root.querySelectorAll('[data-role="back-button"]');
+        for (let i=0; i < buttons.length; i++) {
+            buttons.item(i).addEventListener("click", click);
+        }
     }
 
     refresh(page: Page): void {
