@@ -80,10 +80,10 @@ export default class KeyStore {
         if (!this._sspInit) {
             if (!!window["sessionStorage"]) {
                 this._ssp = new NativeSessionStorageProvider();
-                this._sspInit = true;
             } else {
                 this._ssp = new CookieSessionStorageProvider();
             }
+            this._sspInit = true;
         }
         return this._ssp;
     }
