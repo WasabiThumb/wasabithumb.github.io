@@ -40,6 +40,9 @@ export default class KeyStore {
         return null;
     }
 
+    /**
+     * DO NOT ALLOW CALLING THIS METHOD IF PROTOCOL IS NOT HTTPS
+     */
     static async login(password: string, progress?: (message: string) => void): Promise<Uint8Array | null> {
         const doProgress: boolean = typeof progress === "function";
         if (doProgress) progress!("Generating key");
@@ -55,7 +58,13 @@ export default class KeyStore {
         });
 
         if (doProgress) progress!("Verifying key");
-        const stored: string = await request.getPrivate("./key", key);
+        let stored: string;
+        try {
+            stored = await request.getPrivate("./key", key);
+        } catch (e) {
+            console.warn(e);
+            return null;
+        }
         if (stored !== password) throw new Error(`Illegal key configuration (stored: ${stored}, provided: ${password})`);
 
         if (doProgress) progress!("Storing key");
@@ -71,10 +80,10 @@ export default class KeyStore {
         if (!this._sspInit) {
             if (!!window["sessionStorage"]) {
                 this._ssp = new NativeSessionStorageProvider();
-                this._sspInit = true;
             } else {
                 this._ssp = new CookieSessionStorageProvider();
             }
+            this._sspInit = true;
         }
         return this._ssp;
     }

@@ -151,14 +151,22 @@ export default class PlatonicShowcaseSlide implements ShowcaseSlide {
 
             const css = RGB.toCSS(RGB.lerp(RGB.black(), color, light));
             ctx.fillStyle = wireframe ? "black" : css;
-            ctx.strokeStyle = wireframe ? css : "black";
+            ctx.strokeStyle = css;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
             ctx.lineTo(c.x, c.y);
             ctx.closePath();
-            if (!wireframe) ctx.fill();
-            ctx.stroke();
+            if (wireframe) {
+                ctx.lineCap = "square";
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            } else {
+                ctx.lineCap = "butt";
+                ctx.lineWidth = Math.min(ctx.canvas.width, ctx.canvas.height) * 0.0004;
+                ctx.stroke();
+                ctx.fill();
+            }
         }
     }
 

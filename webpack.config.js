@@ -50,11 +50,15 @@ module.exports = (async () => {
                     {
                         from: `node_modules/coi-serviceworker/coi-serviceworker${vd.mode === "production" ? ".min.js" : ".js"}`,
                         to: path.resolve(__dirname, 'dist', 'assets', 'javascript', 'coi-serviceworker.js')
+                    },
+                    {
+                        from: `node_modules/howler/dist/howler${vd.mode === "production" ? ".core.min.js" : ".js"}`,
+                        to: path.resolve(__dirname, 'dist', 'assets', 'javascript', 'howler.js')
                     }
                 ]
             }),
             new webpack.BannerPlugin({
-                banner: `Portfolio v. ${vd.version}\nWith <3 By Wasabi`
+                banner: `Portfolio v. ${vd.version}\nWith <3 By Wasabi\nApache-2.0 License`
             })
         ],
         resolve: {
@@ -69,6 +73,7 @@ module.exports = (async () => {
             chunkFilename: (pathData) => {
                 return vd.mode === "production" ? '[contenthash].bundle.js' : '[name].bundle.js'
             }
-        }
+        },
+        externals: /^(howl)$/i
     };
 });

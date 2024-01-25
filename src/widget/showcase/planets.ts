@@ -17,11 +17,15 @@
 import {ShowcaseSlide, ShowcaseSlideParameters} from "../showcase";
 import {HSV, RGB} from "../../util/color";
 import {CursorTracker} from "../../util/input";
+import SoundUtil, {HowlSync} from "../../util/sound";
 
 const CAM_DISTANCE: number = 300;
 
 export default class PlanetsShowcaseSlide implements ShowcaseSlide {
 
+    private _sound: HowlSync | null = null;
+    private _soundVolume: number = 0;
+    private _soundVolumeTarget: number = 0;
     private _planets: Planet[] = [];
     private _offset: number = 0;
     private _offsetTarget: number = 0;
@@ -30,6 +34,10 @@ export default class PlanetsShowcaseSlide implements ShowcaseSlide {
     private _cursor: CursorTracker | null = null;
 
     init(param: ShowcaseSlideParameters): void {
+        this._sound = SoundUtil.getHowlSync("drone", { loop: true });
+        this._sound.setVolume(0);
+        this._sound.play();
+
         this._cursor = new CursorTracker(window.innerWidth / 2, window.innerHeight * 0.8);
         this._planets.push(new Planet(0, 6, 0, 0, [ 255, 255, 0 ]));
         let head: number = 10;
@@ -54,6 +62,13 @@ export default class PlanetsShowcaseSlide implements ShowcaseSlide {
         const v = 1 - u;
         if (Math.abs(this._perspectiveFactor - this._perspectiveFactorTarget) > 0.05) this._perspectiveFactor = (v * this._perspectiveFactor) + (u * this._perspectiveFactorTarget);
         if (Math.abs(this._offset - this._offsetTarget) > 0.05) this._offset = (v * this._offset) + (u * this._offsetTarget);
+        this._soundVolumeTarget = v * v * this._soundVolumeTarget;
+        this._soundVolume = (this._soundVolume * v) + (this._soundVolumeTarget * u);
+
+        let sv = this._soundVolume;
+        if (age < 1) sv *= age;
+        if (age > 8) sv *= (9 - age);
+        this._sound!.setVolume(sv);
 
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, width, height);
@@ -111,11 +126,13 @@ export default class PlanetsShowcaseSlide implements ShowcaseSlide {
         if (cursor.lastEventAgeMillis() > 500) return;
         this._offsetTarget = (cursor.getX() / window.innerWidth) * Math.PI * 2;
         this._perspectiveFactorTarget = ((cursor.getY() / window.innerHeight) * 2) - 1;
+        this._soundVolumeTarget = 1;
     }
 
     destroy(): void {
         this._planets = [];
         this._cursor!.stop();
+        this._sound!.unload();
     }
 
 }

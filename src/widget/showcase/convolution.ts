@@ -30,13 +30,9 @@ const KERNELS: ConvolutionKernel[] = [
     ConvolutionKernels.SHARPEN,
     ConvolutionKernels.GAUSSIAN_APPROX,
     ConvolutionKernels.EDGE_DETECT,
-    ConvolutionKernels.SOBEL_TOP,
-    ConvolutionKernels.SOBEL_RIGHT,
-    ConvolutionKernels.EMBOSS,
-    ConvolutionKernels.SOBEL_LEFT,
-    ConvolutionKernels.SOBEL_BOTTOM
+    ConvolutionKernels.EMBOSS
 ];
-const IMAGES = [ "assets/images/usc-sipi/4.2.01.png", "assets/images/usc-sipi/4.2.07.png", "assets/images/usc-sipi/house.png" ];
+const IMAGES = [ "4.2.01.png", "4.2.07.png", "house.png", "4.1.05.png" ];
 export default class ConvolutionShowcaseSlide implements ShowcaseSlide {
 
     private _image: LazyImage = new LazyImage("data:image/png;");
@@ -45,7 +41,7 @@ export default class ConvolutionShowcaseSlide implements ShowcaseSlide {
     private _animStack: ConvolutionKernel[] = [];
     private _cursor: CursorTracker | null = null;
     init(param: ShowcaseSlideParameters): void {
-        const src = IMAGES[Math.floor(Math.random() * IMAGES.length)];
+        const src = "assets/images/usc-sipi/" + IMAGES[Math.floor(Math.random() * IMAGES.length)];
         this._image = new LazyImage(src);
         this._image.startLoading();
         this._kernel = [...ConvolutionKernels.IDENTITY];

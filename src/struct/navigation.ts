@@ -34,10 +34,11 @@ export default class Navigator {
     private readonly _callbacks: NavigateCallback[];
     private readonly _lock: AsyncLock;
     private _firstAutoNavigate: boolean = true;
+    private _backlog: string[] = [];
 
 
     constructor() {
-        this._activePage = Navigator._getInitialPage("204");
+        this._activePage = Navigator._getInitialPage(this, "204");
         this._pageCache[this._activePage.id] = { mode: "sync", value: this._activePage };
         this._callbacks = [];
         this._lock = new AsyncLock();
@@ -105,6 +106,18 @@ export default class Navigator {
             } catch (ignored) { }
             this.navigate("404");
         });
+    }
+
+    goBack() {
+        if (this._activePage.id.toLowerCase() === "home") return;
+        let pop: string | undefined;
+        for (let i=0; i < 2; i++) {
+            if ((pop = this._backlog.pop()) === undefined) {
+                this.navigate("home");
+                return;
+            }
+        }
+        this.navigate(pop!);
     }
 
     onNavigate(cb: NavigateCallback) {
@@ -195,7 +208,7 @@ export default class Navigator {
             el.appendChild(child);
         }
 
-        return new Page(id, el, widgets);
+        return new Page(this, id, el, widgets);
     }
 
     private readonly _txControl: TransitionController = new TransitionController();
@@ -205,6 +218,7 @@ export default class Navigator {
 
     private _transitionStop() {
         this._txControl.stop();
+        Howler.unload();
     }
 
     private readonly _swapFadeControllers: FadeController[] = [];
@@ -221,6 +235,18 @@ export default class Navigator {
             const dest: string = window.location.protocol + "//" + window.location.host + window.location.pathname + (newPage.id === "home" ? "" : `#${newPage.id}`);
             if (dest !== window.location.toString()) window.history.pushState(undefined, document.title, dest);
         } catch (ignored) { }
+        if (newPage.id.toLowerCase() === "home") {
+            this._backlog = [];
+        } else if (oldPage.id.toLowerCase() === "home") {
+            this._backlog = [ newPage.id ];
+        } else {
+            let idx: number = this._backlog.indexOf(newPage.id);
+            if (idx < 0) {
+                this._backlog.push(newPage.id);
+            } else if ((++idx) < this._backlog.length) {
+                this._backlog.splice(idx);
+            }
+        }
 
         const extract: ((page: IPage) => HTMLElement | null) = (page) =>
             (page instanceof Page) ? page.root :
@@ -310,12 +336,12 @@ export default class Navigator {
         return this._privateContentsPromise;
     }
 
-    private static _getInitialPage(defaultID: string): IPage {
+    private static _getInitialPage(navigator: Navigator, defaultID: string): IPage {
         if (!window.loader.hasToken(LoaderDOMContentToken)) {
             const el = document.querySelector("body > .dyn-page.active");
             if (!!el) {
                 let pid = el.getAttribute("data-page");
-                return new Page(!pid ? defaultID : pid, el as HTMLElement);
+                return new Page(navigator, !pid ? defaultID : pid, el as HTMLElement);
             }
         }
         return Page.null(defaultID);

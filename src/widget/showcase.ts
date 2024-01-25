@@ -230,7 +230,7 @@ const SLIDES: ShowcaseSlideRegistry = [
 const randomSlide: (() => ShowcaseSlide) = (() => {
 
     let unused: ShowcaseSlideRegistry = [];
-    let lastUsed: { new(): ShowcaseSlide } | null = null;
+    let lastUsed: { new(): ShowcaseSlide } = ConvolutionShowcaseSlide; // convolution is too ugly to show first ;)
 
     const splice: (() => { new(): ShowcaseSlide }) = (() => {
         return unused.splice(Math.floor(Math.random() * unused.length), 1)[0];

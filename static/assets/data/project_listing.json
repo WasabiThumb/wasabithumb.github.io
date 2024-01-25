@@ -1,0 +1,216 @@
+[
+  {
+    "title": "New Portfolio",
+    "id": "new-portfolio",
+    "langs": [ "TypeScript", "JavaScript" ],
+    "description": [
+      "A new portfolio made from scratch with TypeScript and Webpack. The code is 100% ",
+      {
+        "type": "link",
+        "content": "Open Source",
+        "href": "https://github.com/WasabiThumb/wasabithumb.github.io"
+      },
+      " and leverages OOP to maximize modularity & readability. Certain pages use an encryption library",
+      " to hide information until the author's personal e-mail is supplied as a password."
+    ],
+    "meta": {
+      "last_updated": "2024-01-24T21:26:46Z",
+      "contributors": [],
+      "license": "Apache-2.0"
+    },
+    "thumbnails": [
+      {
+        "src": "new-portfolio/1.png",
+        "size": [1682, 807]
+      },
+      {
+        "src": "new-portfolio/2.png",
+        "size": [442, 810]
+      }
+    ]
+  },
+  {
+    "title": "CMYK Engine",
+    "id": "cmyk",
+    "langs": [ "Java", "C" ],
+    "description": [
+      "This project has a 4 year long storied history that began when I resolved to make a game with my own engine, ",
+      "entirely from scratch. After many missteps and restarts, the final iteration of the engine is largely complete. ",
+      "The high-level functionality is done in Java, and the render, input, collision & sound pipelines are handled ",
+      "efficiently in C with Vulkan and SDL2. A slow fallback pipeline using AWT is also implemented. Fonts use the ",
+      "YAFF format, for which a custom fast parser was implemented."
+    ],
+    "meta": {
+      "last_updated": "2024-01-19T18:45:03.713Z",
+      "contributors": []
+    },
+    "thumbnails": ["cmyk_engine.gif"]
+  },
+  {
+    "title": "Blot & Warp3D",
+    "id": "blot-warp3d",
+    "langs": [ "Rust", "Kotlin" ],
+    "description": [
+      "A reference implementation of a creative 3D textured plane renderer I brainstormed in a graphing calculator ",
+      "for both Rust and Kotlin. The Rust implementation uses gradient descent, while the Kotlin implementation ",
+      "calculates U values with a single large computed expression."
+    ],
+    "meta": {
+      "last_updated": "2023-10-10T04:30:30Z",
+      "contributors": [],
+      "license": "Apache-2.0"
+    },
+    "thumbnails": [
+      {
+        "src": "warp3d-blot/1.png",
+        "size": [793, 471]
+      },
+      {
+        "src": "warp3d-blot/2.gif",
+        "size": [512, 512]
+      }
+    ]
+  },
+  {
+    "title": "Demonic Publisher",
+    "id": "demonic-publisher",
+    "langs": [ "TypeScript", "Kotlin" ],
+    "description": [
+      "Near the end of my employment at DemonicPvP, I created a build tool with TypeScript & Electron to manage the ",
+      "Kotlin & Java codebase. This gave an effortless abstraction for Maven & Gradle while standardizing the build ",
+      "environment no matter what the current platform & installed JDKs are. An option was included to authenticate ",
+      "with the admin panel to automatically deploy built artifacts to the development server all in 1 click."
+    ],
+    "meta": {
+      "last_updated": "2023-10-03T11:59:00.000Z",
+      "contributors": [],
+      "license": "Not Determined"
+    },
+    "thumbnails": ["publisher.png"]
+  },
+  {
+    "title": "Reddit Reader",
+    "id": "reddit-reader",
+    "langs": [ "NodeJS" ],
+    "description": [
+      "In 2022, a popular and lucrative form of video entertainment were images of popular Reddit posts read out in a ",
+      "text-to-speech voice over a generic looping background. This NodeJS project was created to prove that it is ",
+      "possible to automate this content. The posts and comments shown in the final video are not screenshots from ",
+      "the site, it is a scratch reconstruction of the site's UI filled in with data from the API. This was never ",
+      "published since it could promote content theft."
+    ],
+    "meta": {
+      "last_updated": "2022-06-13T18:34:07.000Z",
+      "contributors": []
+    },
+    "thumbnails": [
+      {
+        "src": "reddit-reader/2.gif",
+        "size": [1080, 1920]
+      }
+    ]
+  },
+  {
+    "title": "XClaim",
+    "id": "xclaim",
+    "langs": [ "Java" ],
+    "description": [
+      "A somewhat popular plug-in for Minecraft game servers that allow administrators and players alike to control ",
+      "modification by others in certain chunks of the game world. It boasts over 20 criteria to control, multiple ",
+      "language support (thanks to a few translators), and seamless integration with popular plugins like DynMap and ",
+      "BlueMap that display a top-down view of the world over HTTP. It is no longer being actively worked on."
+    ],
+    "meta": {
+      "last_updated": "2022-05-16T19:01:45Z",
+      "contributors": [ "eingruenesbeb", "SnowCutieOwO" ],
+      "license": "MPL-2.0"
+    },
+    "thumbnails": ["xclaim.png"]
+  },
+  {
+    "title": "XPlug & XGame",
+    "id": "xplug",
+    "langs": [ "Java" ],
+    "description": [
+      "XPlug was an ambitious project designed to make Minecraft programming more accessible by providing an API ",
+      "bridge between Java and Lua, loved for its simplicity and hot swap capabilities. By the time XPlug was ",
+      "discontinued, it was possible to make very fun effects in just a few lines, such as giving every player a ",
+      "glowing halo in 26 lines. XGame was developed in tandem with XPlug and allowed coding containerized mini-games for ",
+      "people to enjoy. A favorite was King of the Hill, which featured a rocket launcher and a scoreboard in just ",
+      "370 lines."
+    ],
+    "meta":{
+      "last_updated": "2022-09-27T06:28:39Z",
+      "contributors": [],
+      "license": "MPL-2.0"
+    },
+    "thumbnails": ["xplug.png"]
+  },
+  {
+    "title": "Old Portfolio",
+    "id": "old-portfolio",
+    "langs": ["JavaScript"],
+    "description": [
+      "For most of 2022, my old portfolio could be found at ",
+      {
+        "type": "link",
+        "content": "wasabi.codes",
+        "href": "about:blank"
+      },
+      ". The page was presented in the style of a terminal, offering a list of commands that the visitor could ",
+      "enter to view various demos and navigate to pages within the site. The home page featured an implementation of ",
+      "Tetris, and 2 fully functional online multiplayer games (Codenames and Auction Tic-Tac-Toe) could also be found."
+    ],
+    "meta": {
+      "last_updated": "2022-02-24T18:26:37.000Z",
+      "contributors": []
+    },
+    "thumbnails": ["old_portfolio.png"]
+  },
+  {
+    "title": "Twitter Pong",
+    "id": "twitter-pong",
+    "langs": [ "NodeJS" ],
+    "description": [
+      "A very simple Twitter bot that allows followers to play Pong between 2 accounts. The move to make is decided ",
+      "democratically every 30 minutes. It was discontinued due to unreliable hosting and a lack of interest."
+    ],
+    "meta": {
+      "last_updated": "2021-01-21T15:14:47Z",
+      "contributors": []
+    },
+    "thumbnails": ["tpong.png"]
+  },
+  {
+    "title": "Reverse Minesweeper",
+    "id": "reversesweeper",
+    "langs": [ "Python" ],
+    "description": [
+      "An ugly cross-platform application made with Python & PyGame to answer the simple question; what would ",
+      "Minesweeper be like if the numbers indicated empty spaces rather than mines? The verdict is in; ",
+      "essentially nothing changes."
+    ],
+    "meta": {
+      "last_updated": "2019-06-19T23:17:08Z",
+      "contributors": [ "Nnnes" ]
+    },
+    "thumbnails": ["reversesweeper.png"]
+  },
+  {
+    "title": "GMod Addons",
+    "id": "gmod",
+    "langs": [ "Lua" ],
+    "description": [
+      "Making funny things happen in my favorite game, Garry's Mod, is how I got my start as a programmer on ",
+      "September 6th, 2015. By 2017 or 2018 I felt that I deeply understood the API. It started with flying green ",
+      "chairs, then a weapon that turns people to stone, and eventually I touched 122,000+ hearts by allowing players ",
+      "to kick things."
+    ],
+    "meta": {
+      "last_updated": "2015-09-06T11:36:00.000Z",
+      "contributors": [ "code_gs", "the Facepunch community" ],
+      "license": "Steam Subscriber Agreement"
+    },
+    "thumbnails": ["gmod.gif"]
+  }
+]

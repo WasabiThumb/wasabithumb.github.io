@@ -25,6 +25,8 @@ export default class ConstantsPageWidget implements PageWidget {
 
     init(page: Page) {
         const selected = page.root.querySelectorAll(`[data-const]`);
+
+        let any = false;
         for (let i=0; i < selected.length; i++) {
             const element: HTMLElement = selected.item(i) as HTMLElement;
 
@@ -44,7 +46,10 @@ export default class ConstantsPageWidget implements PageWidget {
             } else {
                 element.innerText = constant;
             }
+            any = true;
         }
+
+        if (!any) console.warn(`Constants widget found no targets (Page: ${page.id}). Consider removing it`);
     }
 
     destroy(page: Page): void {
