@@ -1,0 +1,181 @@
+
+.projects-listing {
+    font-size: min(4vw, 4vh);
+}
+
+.projects-listing .sep {
+    display: block;
+    font-size: min(2vw, 2vh);
+    border: 0.05em solid #efefef;
+    border-bottom: none;
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+    color: #efefef;
+    font-family: 'Ubuntu Mono', monospace;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    overflow: unset;
+    text-align: center;
+    height: 0;
+}
+
+.projects-listing .sep > h3 {
+    background-color: #0c0c0c;
+    font: inherit;
+    display: inline-block;
+    text-align: center;
+    overflow: unset;
+    margin: 0;
+    border: 0;
+    transform: translateY(-0.5em);
+    z-index: 2;
+}
+
+.projects-listing .sep > h3:before {
+    content: '\00a0';
+}
+
+.projects-listing .sep > h3:after {
+    content: '\00a0';
+}
+
+.projects-listing .project {
+    font-size: min(4vw, 4vh);
+    font-family: 'Ubuntu Mono', monospace;
+    margin: 0.5em;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    padding: 0.5em;
+    background-color: #efefef;
+    color: #0c0c0c;
+    position: relative;
+    word-spacing: 0;
+    transform-origin: center;
+    transition-property: transform;
+    transition-duration: 200ms;
+    transition-timing-function: ease-in-out;
+    cursor: pointer;
+}
+
+.projects-listing .project:hover {
+    transform: scale(1.025);
+}
+
+.projects-listing .project > .miter {
+    width: 0.6em;
+    height: 0.6em;
+    position: absolute;
+    background-color: #0c0c0c;
+    transform: scale(1.1);
+    pointer-events: none;
+}
+
+.projects-listing .project > .miter.tl {
+    top: 0;
+    left: 0;
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+    transform-origin: bottom right;
+}
+
+.projects-listing .project > .miter.br {
+    right: 0;
+    bottom: 0;
+    clip-path: polygon(100% 100%, 100% 0, 0 100%);
+    transform-origin: top left;
+}
+
+.projects-listing .project > .inner {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: max-content;
+    font: inherit;
+}
+
+.projects-listing .project > .inner > .project-column {
+    font: inherit;
+    flex-grow: 1;
+    flex-basis: 0;
+    border-left: 0.1em solid #0c0c0c;
+    padding-left: 0.25em;
+    padding-right: 0.25em;
+    position: relative;
+}
+
+.projects-listing .project > .inner > .project-column:first-of-type {
+    border: none;
+    text-align: left;
+}
+
+.projects-listing .project > .inner > .project-column:nth-of-type(2) {
+    text-align: center;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+
+.projects-listing .project > .inner > .project-column:nth-of-type(3) {
+    text-align: right;
+}
+
+.project-column h3 {
+    font-weight: 700;
+    font-family: 'Ubuntu', sans-serif;
+    margin: 0;
+}
+
+.project-column p {
+    font-weight: 500;
+    font-size: 0.6em;
+    margin: 0;
+    font-family: 'Ubuntu', sans-serif;
+}
+
+.project-column p.meta {
+    font-size: 0.4em;
+    font-family: 'Ubuntu', sans-serif;
+}
+
+.project-column a {
+    font: inherit;
+    color: #3db406;
+    text-decoration: underline;
+    white-space: nowrap;
+}
+
+.project-column span.hint {
+    position: absolute;
+    left: 2%;
+    max-width: 80%;
+    bottom: 0;
+    font-family: 'Ubuntu', sans-serif;
+    font-size: 0.4em;
+    font-weight: 400;
+    text-align: left;
+    opacity: 0.6;
+}
+
+.project-column span.hint:after {
+    content: 'Click to see more';
+}
+
+.project-column img.thumbnail {
+    width: 100%;
+    height: 100%;
+    border: none;
+    object-fit: contain;
+    object-position: center;
+    filter: drop-shadow(0 0 0.45rem rgba(0,0,0,0.6));
+    max-height: 35vh;
+    max-height: calc(var(--dyn-max-height) * 0.35);
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.project-column img.lang {
+    display: inline-block;
+    width: 0.5em;
+    height: 0.5em;
+    vertical-align: top;
+    margin-top: 0.15em;
+    margin-right: 0.15em;
+}

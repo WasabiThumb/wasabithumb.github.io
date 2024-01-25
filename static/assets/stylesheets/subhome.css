@@ -1,0 +1,58 @@
+
+.subhome-conts {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    height: var(--dyn-max-height);
+    background-color: #0c0c0c;
+    position: relative;
+    overflow-y: auto;
+}
+
+.subhome-banner {
+    display: block;
+    width: 100vw;
+    height: 8vh;
+    height: calc(0.08 * var(--dyn-max-height));
+    background-color: #efefef;
+    color: #0c0c0c;
+    text-align: center;
+    font-size: 6vh;
+    font-size: calc(0.06 * var(--dyn-max-height));
+    line-height: 1.4em;
+    font-family: 'Bebas Neue', sans-serif;
+    clip-path: polygon(0 0, 100% 0%, 100% 90%, 0% 100%);
+    position: fixed;
+    z-index: 2;
+}
+
+.subhome-banner > img.back {
+    position: absolute;
+    left: 0;
+    top: 0.15em;
+    height: 1em;
+    cursor: pointer;
+}
+
+.subhome-banner.backdrop {
+    display: block;
+    width: 100vw;
+    height: 8vh;
+    height: calc(0.08 * var(--dyn-max-height));
+    background-color: rgba(12, 12, 12, 0.2);
+    clip-path: polygon(0 0, 100% 0%, 100% 90%, 0% 100%);
+    position: fixed;
+    left: 0;
+    top: 1.5vh;
+    top: calc(0.015 * var(--dyn-max-height));
+}
+
+.subhome-conts > .inner {
+    position: absolute;
+    font-size: 6vh;
+    font-size: calc(0.06 * var(--dyn-max-height));
+    left: 0.5em;
+    top: 1.75em;
+    width: 90%;
+    width: calc(100% - 1em);
+}

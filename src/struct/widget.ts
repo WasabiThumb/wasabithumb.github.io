@@ -19,8 +19,9 @@ import ShowcasePageWidget from "../widget/showcase";
 import ConstantsPageWidget from "../widget/constants";
 import LoginPageWidget from "../widget/login";
 import BackPageWidget from "../widget/back";
+import ProjectListPageWidget from "../widget/projectlist";
 
-export type PageWidgetType = "main-showcase" | "constants" | "login" | "back";
+export type PageWidgetType = "main-showcase" | "constants" | "login" | "back" | "project-list";
 
 export interface PageWidget {
 
@@ -53,6 +54,7 @@ export class PageWidgets {
             ConstantsPageWidget,
             LoginPageWidget,
             BackPageWidget,
+            ProjectListPageWidget,
         );
         this.INIT_DEFAULTS = true;
     }
