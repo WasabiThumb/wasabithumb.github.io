@@ -66,6 +66,7 @@ export default abstract class WarpIconRenderer<T extends RenderingContext> {
             style.top = `${(containerRect.height - fh) / 2}px`;
         }
 
+        const last = this.influence.copy();
         const targetInfluence: Vector2 = this.computeInfluence();
         this.influence = Vector.lerp(this.influence, targetInfluence, Math.min(delta * 6, 1));
 
@@ -73,6 +74,8 @@ export default abstract class WarpIconRenderer<T extends RenderingContext> {
             if (this._iconFirstAvailable) {
                 this.onImageReady();
                 this._iconFirstAvailable = false;
+            } else {
+                if (last.fuzzyEquals(this.influence, 1e-5)) return;
             }
             this.renderAfterReady(delta);
         } else {
