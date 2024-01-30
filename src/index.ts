@@ -18,6 +18,7 @@ import Loader from "./util/loader";
 import Navigator from "./struct/navigation";
 import {LIB_VERSION} from "./util/version";
 import KeyStore from "./struct/keystore";
+import SoundUtil from "./util/sound";
 
 const navigator: Navigator = new Navigator();
 window.addEventListener("hashchange", () => {

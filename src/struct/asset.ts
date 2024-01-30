@@ -228,7 +228,7 @@ export class LazyImage {
         };
 
         if (this._objectMode) {
-            request.getPotentiallyPrivate(absoluteURL(this.url), undefined, "bytes").then((bytes: Uint8Array) => {
+            request.getPotentiallyPrivate(this.url, undefined, "bytes").then((bytes: Uint8Array) => {
                 if (!me._init) return;
                 const blob: Blob = new Blob([ bytes.buffer ]);
                 img.src = URL.createObjectURL(blob);

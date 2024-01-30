@@ -93,14 +93,23 @@ export default class ShowcasePageWidget implements PageWidget {
                 this._state = { type: "simple", slide: this._state.to, age: this._state.age };
             }
         } else if (effAge >= STAY_PERIOD) {
-            this._state = { type: "transition", slide: this._state.slide, to: this.offscreenRt.isValid() ? this.offscreenRt.spawn() : this.rt.spawn(), age: 0, offset: effAge };
+            this._state = {
+                type: "transition",
+                slide: this._state.slide,
+                to: this.offscreenRt.isValid() ? this.offscreenRt.spawn() : this.rt.spawn(),
+                age: 0,
+                offset: effAge
+            };
         }
 
-        if (LIB_VERSION.indexOf("git") < 0) {
-            this._state.age += delta;
-            return;
+        if (LIB_VERSION.indexOf("git") != -1) {
+            this._debug(
+                delta,
+                this._state.type === "transition" ?
+                    `${effAge.toFixed(2)} (${this._state.age.toFixed(2)})` :
+                    effAge.toFixed(2)
+            );
         }
-        this._debug(delta, this._state.type === "transition" ? `${effAge.toFixed(2)} (${this._state.age.toFixed(2)})` : effAge.toFixed(2));
         this._state.age += delta;
     }
 
@@ -132,7 +141,7 @@ export default class ShowcasePageWidget implements PageWidget {
         this._debugState.head += 0.25;
         this._debugLine("Slide Age (s): " + age);
         this._debugLine("Slide Mode: " + this._state.type);
-        this._debugLine("Slide Class: " + ((this._state.type === "invalid") ? "INVALID" : (this._state as ShowcaseSlideSimpleState).slide.constructor.name));
+        this._debugLine("Slide Class: " + ((this._state.type === "invalid") ? "INVALID" : this._state.slide.constructor.name));
         this._debugLine("FPS: " + fps.toFixed(2) + " (" + sum.toFixed(2) + " avg)");
         this._debugLine(`Size: ${this.rt.params!.canvas.width} x ${this.rt.params!.canvas.height}`);
         this._debugLine(`Capabilities: ${capabilities}`);

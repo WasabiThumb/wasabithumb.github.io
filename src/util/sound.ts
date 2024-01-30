@@ -18,6 +18,7 @@ import {Howl, HowlOptions} from "howler";
 import {request} from "./request";
 import KeyStore from "../struct/keystore";
 import * as base64 from "@stablelib/base64";
+import {absoluteURL} from "./url";
 
 
 /*
@@ -37,12 +38,7 @@ export default class SoundUtil {
             const pc = await window.pages.getPrivateContents();
             for (let i=0; i < ret.length; i++) {
                 const clip: Clip = ret[i];
-                for (let z=0; z < pc.length; z++) {
-                    if (clip.src.endsWith(pc[z])) {
-                        clip.private = true;
-                        break;
-                    }
-                }
+                clip.private = pc.indexOf(absoluteURL(clip.src)) > -1;
                 ret[i] = clip;
             }
         }

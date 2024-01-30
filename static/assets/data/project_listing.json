@@ -130,7 +130,7 @@
   {
     "title": "XPlug & XGame",
     "id": "xplug",
-    "langs": [ "Java" ],
+    "langs": [ "Java", "Lua" ],
     "description": [
       "XPlug was an ambitious project designed to make Minecraft programming more accessible by providing an API ",
       "bridge between Java and Lua, loved for its simplicity and hot swap capabilities. By the time XPlug was ",

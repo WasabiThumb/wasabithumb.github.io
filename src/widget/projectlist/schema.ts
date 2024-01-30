@@ -26,7 +26,8 @@ export type ProjectListEntry = {
     thumbnails?: ProjectListThumbnail[]
 };
 
-export type ProjectListLang = "C" | "Java" | "JavaScript" | "Lua" | "PHP" | "Python" | "Rust" | "TypeScript" | "Kotlin" | "NodeJS";
+export type ProjectListLang = "C" | "Java" | "JavaScript" | "Lua" | "PHP" | "Python" | "Rust" | "TypeScript"
+    | "Kotlin" | "NodeJS";
 
 export type ProjectListDescriptionItem = string | ProjectListDescriptionItemPlain | ProjectListDescriptionItemLink;
 export type ProjectListDescriptionItemPlain = {

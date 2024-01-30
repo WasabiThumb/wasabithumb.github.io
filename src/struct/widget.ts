@@ -20,8 +20,9 @@ import ConstantsPageWidget from "../widget/constants";
 import LoginPageWidget from "../widget/login";
 import BackPageWidget from "../widget/back";
 import ProjectListPageWidget from "../widget/projectlist";
+import WarpIconPageWidget from "../widget/warpicon";
 
-export type PageWidgetType = "main-showcase" | "constants" | "login" | "back" | "project-list";
+export type PageWidgetType = "main-showcase" | "constants" | "login" | "back" | "project-list" | "warp-icon";
 
 export interface PageWidget {
 
@@ -55,6 +56,7 @@ export class PageWidgets {
             LoginPageWidget,
             BackPageWidget,
             ProjectListPageWidget,
+            WarpIconPageWidget,
         );
         this.INIT_DEFAULTS = true;
     }

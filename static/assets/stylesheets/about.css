@@ -1,0 +1,49 @@
+
+.about-conts {
+    position: relative;
+}
+
+.about-conts > .part {
+    position: absolute;
+    top: 0;
+    height: 100%;
+}
+
+.about-conts > .part:nth-of-type(1) {
+    left: 0;
+    width: 60%;
+}
+
+.about-conts > .part:nth-of-type(2) {
+    left: 60%;
+    width: 40%;
+}
+
+@media (max-aspect-ratio: 1/1) {
+    .about-conts > .part:nth-of-type(1) {
+        left: 0;
+        width: 100%;
+        top: 0;
+        height: 60%;
+    }
+
+    .about-conts > .part:nth-of-type(2) {
+        left: 0;
+        width: 100%;
+        top: 60%;
+        height: 40%;
+    }
+}
+
+.toy canvas {
+    aspect-ratio: 1/1;
+    width: 100%;
+    position: relative;
+}
+
+@media (max-aspect-ratio: 1/1) {
+    .toy canvas {
+        width: unset;
+        height: 100%;
+    }
+}

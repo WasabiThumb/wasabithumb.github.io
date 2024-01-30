@@ -33,11 +33,14 @@ const KERNELS: ConvolutionKernel[] = [
     ConvolutionKernels.EMBOSS
 ];
 const IMAGES = [ "4.2.01.png", "4.2.07.png", "house.png", "4.1.05.png" ];
+type AnimState = { type: "idling", remaining: number }
+    | { type: "transitioning", a: ConvolutionKernel, b: ConvolutionKernel, start: number, duration: number };
+
 export default class ConvolutionShowcaseSlide implements ShowcaseSlide {
 
     private _image: LazyImage = new LazyImage("data:image/png;");
     private _kernel: ConvolutionKernel = [...ConvolutionKernels.IDENTITY];
-    private _animState: { type: "idling", remaining: number } | { type: "transitioning", a: ConvolutionKernel, b: ConvolutionKernel, start: number, duration: number } = { type: "idling", remaining: 0 };
+    private _animState: AnimState = { type: "idling", remaining: 0 };
     private _animStack: ConvolutionKernel[] = [];
     private _cursor: CursorTracker | null = null;
     init(param: ShowcaseSlideParameters): void {
