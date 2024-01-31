@@ -19,114 +19,17 @@ import {LazyImage} from "../../struct/asset";
 import {CursorTracker} from "../../util/input";
 import {Vector2, Vector3} from "../../math/vector";
 import Quaternion from "../../math/quaternion";
+import {decompress} from "lzutf8-light";
 
 const nonPowerTwo = ((value: number) => (value & (value - 1)));
 const SQRT3_3: number = Math.sqrt(3.0) / 3.0;
+const decompressSBS = ((dat: string) => decompress(dat, { inputEncoding: "StorageBinaryString" }) as string);
+const shaderVertex: string = decompressSBS(`ズᴜ䴬❗〈Ǚ䫆㈠カᥜ二垅ͻ䶥棒潮ᶅ㐈ઌ垇⎫䦕۞潲㈝䊂仌ᜧ䭋㦟఺盐ື婙Ѝ嘖䭱₤䃶ਠတ࠙涋粅夁眐橨⣏㤖ࠌք̒䧞ᒿ᪢‽栿ὀ耀`);
+const shaderFragment: string = decompressSBS(`㠹ᥘ洮㚖筱Ƶ䫈極㚸࠙䶍瘗⇘⧙䋤祩㜳䠝䲬㌢β冕烨畲㊡寛湌䎰厫㦥䳞牭္塛⸍䙗ᆒႁ檧䘋攎ㅑ搎ഁ୾䁅殠ᅴ栈嬴ȭ㴁ୖ䁅冔ᅩ㜺ࠝ䲮ⴥ㍋ᶡ桶૆۳2⪥๐ݫ嗛䨁朩ွ䊈Є౲箱÷ဲ⹸ᷢ䙚Ⳅʌ⋑ô穀ㄩ္ᥝຮ⛢Ń墀婀瀩ဗ䠊ຘ催ㅮᤙ䖖䙹昌嶍䐇刂䍁´䃔⤠ᔐᯈֹョؠ㦬䁚⁬戇ᴈչョ⽘Ȱ淈᠗఺‑䋓ॱ䌵繤‽ေࠊ䐌ⳁ㍖ၙ呀⫤£犅䴘䅦䄁⮐ʙ䨖㙢֛Ѕ⹀ಮ⡙垈ᙫပ㤀㍙Ⅷㆎᆸ摀ⴠᤗఱ຺ӗㆩΐǭ伣㔐ૈെ⹀ۡ↿䠂଩撏ㆊ墨繀࢓ࢀ婀棄ᑳ䁌敄܌⫩Ⲁ僬ㄠᖐᨱ䢮ు䥎ၛỒ氠ᖐᬱ䒎乀૆傑噀⬠㗣झ㲀ᛢ乃ণᑑ搁ዳ-㤢㺠෦ᤄ䁗䴙ဖ䠚碃庰Г墀呀盆⽤兺䀞ృᜨσ઩攁糲䂈汘䖮䀈䞰ʇ䥄撚嫺⺐াᔝ懐ɓ携㥀❸摜㥮᣿Ყ䩁㟢嘹䀑佀೯ᐃ及˂撐焓ᢤ᱑昪᧓ࠊ痫C璒㲀ൖ冖▻堂懅ݣບᲀᢞ砉᜜⿊Ƴᐱ㄂夊ౠ癉矴ɓ䩋瞀攳ޙᎏ』ᷓᒹ卉疁ോ㳀⍜嬇ဃהİ㫢ŝ嵠㿃⤁珴߶盤Ǒ窀⛜瀑侈Ϸ丁曨ȵ獐䙸搢彘࠳堉χጚ㩁᤼䀌⼠ϫ嘁⯇ማ䠏㲀ऒ帢催䃬㓆ົൈޤܷஓ傡汫洅ᬹᥝМ䁍䦯ᐌ剮‭ျ൹¬ᝣ㝐Їࡈ㻄ኘࠉ䓘匣懩Ç嘂ᅲ㋳䀳娉抽㩷᠕ᡟ瘁⫦ᕟ㶠摕㝨ᤔ姎Ã㦺翁䧿灢ᎡǑ灀㴠㡲ᲀᯎ⠝巏娂穢成礀桼偧䜨ࢇ᱂摩㌳ᘹ²㞂ũǓ嘍䕡ㄹ䨱⎥Ṡሩ䞠ř䭾㳲䅾ᶀ枬䋮⢕䖈◥ț穀奙䉞䀹ސҾ瑹犃䢘伸惌ㄫ瞰ʷ攇␺ḱӼ倉朠֡泞楤ံ塚ⷅ໠ੳ垐ѳ标懶Ȫ磫Ṁܫ垬о痩Ď簀ᴜ䀙䘲⥛ᲔⰠ㫣卲ਮ沵ஶ䵇ࠂ杬⾣Ი⳨㛶捻䢀穀瓆⢙ᄊᴁጂ木▀僪ⱶᓲ䃷᳁ड़戟᠄ᾔᓦ熁姫睦⬙傠恘⃇Ɣ仂侠耀`);
 
-const shaderVertex: string = `
-attribute vec2 aVertexPosition;
-attribute vec2 aTextureCoord;
-
-varying vec2 vTextureCoord;
-
-void main() {
-    gl_Position = vec4(aVertexPosition, 0, 1);
-    vTextureCoord = aTextureCoord;
-}
-`;
-
-const shaderFragment: string = `
-precision mediump float;
-varying vec2 vTextureCoord;
-
-uniform sampler2D uSampler;
-uniform float p;
-uniform float o;
-uniform float u;
-uniform float t;
-uniform float l;
-uniform float k;
-uniform float j;
-uniform float h;
-uniform int vert;
-uniform float light;
-
-float sampleU(vec2 uvCoord)
-{
-    float v = uvCoord.x;
-    if (vert == 1) return (v - p) / (t - p);
-    float b = uvCoord.y;
-
-    float v6 = (h - j) * o - (h - j) * p - (k - l) * t + (k - l) * u;
-    if (v6 == 0.0) return -1.0;
-
-    float b2 = b * b;
-    float j2 = j * j;
-    float h2 = h * h;
-    float l2 = l * l;
-    float k2 = k * k;
-
-    float two = 2.0;
-
-    float v1 = b2 - two * b * h;
-    float v5  = (b2 - two * b * j + j2) * (o * o) - two * (b2 - b * h - (b - h) * j) * o * p
-    + (v1 + h2) * (p * p) + (b2 - two * b * l + l2) * (t * t) + (b2 - two * b * k + k2) * (u * u)
-    + (h2 - two * h * j + j2 - two * (h - j) * k + k2 + two * (h - j - k) * l + l2) * (v * v)
-    - two * ((b2 - b * j - (b - j) * l) * o - (b2 + b * h - two * b * j - two * (b - j) * k
-    + (b - h) * l) * p) * t + two * ((v1 + b * j + (b - j) * k - two * (b - h) * l) * o
-    - (b2 - b * h - (b - h) * k) * p - (b2 - b * k - (b - k) * l) * t) * u + two * ((b * h - (b - h) * j - j2
-    - (b - j) * k + (b - two * h + j) * l) * o - (b * h + h2 - (b + h) * j - (b + h - two * j) * k
-    + (b - h) * l) * p - (b * h - b * j - (b - two * j) * k + (b - h - j - k) * l + l2) * t
-    + (b * h - b * j - (b - h - j) * k - k2 + (b - two * h + k) * l) * u) * v;
-
-    if (v5 < 0.0) return -1.0;
-
-    float v2 = (b - j) * o - (b + h - two * j) * p - (b - l) * t;
-    float v3 = (b + k - two * l) * u;
-    float v4 = (h - j - k + l) * v;
-    float v7 = v2 + v3 + v4;
-
-    v5 = sqrt(v5);
-
-    float ret = 0.5 * (v7 - v5) / v6;
-    if (ret >= 0.0 && ret <= 1.0) return ret;
-
-    ret = 0.5 * (v7 + v5) / v6;
-    if (ret == 0.0/0.0) return -1.0;
-    return ret;
-}
-
-float sampleV(vec2 uvCoord, float su)
-{
-    float v = uvCoord.x;
-    float b = uvCoord.y;
-
-    float tx = p + (o - p) * su;
-    float bx = u + (t - u) * su;
-
-    float diffX = bx - tx;
-    if (abs(diffX) < 0.01) {
-        float ty = l + (k - l) * su;
-        float by = j + (h - j) * su;
-        return (b - ty) / (by - ty);
-    }
-    return (v - tx) / diffX;
-}
-
-void main() {
-    float u = sampleU(vTextureCoord);
-    if (u >= 0.0 && u <= 1.0) {
-        float v = sampleV(vTextureCoord, u);
-        if (v >= 0.0 && v <= 1.0) {
-            gl_FragColor = texture2D(uSampler, vec2(u,v)) * light;
-            return;
-        }
-    }
-    gl_FragColor = vec4(0, 0, 0, 0);
-}
-`;
-
-type GLWarpParams = { [k in "p" | "o" | "u" | "t" | "l" | "k" | "j" | "h" | "vert" | "light"]: WebGLUniformLocation };
+const GLWarpParamKeys = ["p", "o", "u", "t", "l", "k", "j", "h", "vert", "light"] as const;
+type GLWarpParam = typeof GLWarpParamKeys[number];
+type GLWarpParams = { [k in GLWarpParam]: WebGLUniformLocation };
 type GLParams = {
     tex: WebGLTexture,
     shaders: WebGLShader[],
@@ -204,8 +107,8 @@ export default class GLWarpIconRenderer extends WarpIconRenderer<WebGLRenderingC
         });
 
         const warpParams: Partial<GLWarpParams> = {};
-        for (let k of ["p", "o", "u", "t", "l", "k", "j", "h", "vert", "light"]) {
-            warpParams[k as keyof GLWarpParams] = gl.getUniformLocation(program, k)!;
+        for (let k of GLWarpParamKeys) {
+            warpParams[k as GLWarpParam] = gl.getUniformLocation(program, k)!;
         }
 
         this._params = {
@@ -219,9 +122,11 @@ export default class GLWarpIconRenderer extends WarpIconRenderer<WebGLRenderingC
         };
     }
 
+    private _pulseTimer: number = 0;
     protected renderBeforeReady(delta: number): void {
+        let v: number = 0.15 + 0.1 * Math.sin(this._pulseTimer += delta * 6);
         const gl: WebGLRenderingContext = this.ctx;
-        gl.clearColor(0, 0, 0, 0);
+        gl.clearColor(v, v, v, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
     }
 
@@ -272,7 +177,7 @@ export default class GLWarpIconRenderer extends WarpIconRenderer<WebGLRenderingC
             quadPoint(-1, -1),
             quadPoint(1, 1),
             quadPoint(-1, 1),
-            (fwd.dot(lightDir) + 1) / 2
+            (fwd.dot(lightDir) * 2 + 1) / 3
         );
     }
 
@@ -280,7 +185,7 @@ export default class GLWarpIconRenderer extends WarpIconRenderer<WebGLRenderingC
         const gl: WebGLRenderingContext = this.ctx;
         const params: GLWarpParams = this._params!.warpParams;
 
-        const set = ((k: keyof GLWarpParams, v: number) => {
+        const set = ((k: GLWarpParam, v: number) => {
             gl.uniform1f(params[k], v as GLfloat);
         });
 

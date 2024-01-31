@@ -21,7 +21,6 @@ import {CursorTracker} from "../../util/input";
 const FOV: number = Math.PI / 2;
 const HALF_FOV: number = FOV / 2;
 const CAM_INSET: number = 1 / Math.tan(HALF_FOV);
-const CAM_ORIGIN: Vector3 = new Vector3(0, 0, -CAM_INSET);
 
 export default abstract class WarpIconRenderer<T extends RenderingContext> {
 
@@ -66,7 +65,6 @@ export default abstract class WarpIconRenderer<T extends RenderingContext> {
             style.top = `${(containerRect.height - fh) / 2}px`;
         }
 
-        const last = this.influence.copy();
         const targetInfluence: Vector2 = this.computeInfluence();
         this.influence = Vector.lerp(this.influence, targetInfluence, Math.min(delta * 6, 1));
 
@@ -74,8 +72,6 @@ export default abstract class WarpIconRenderer<T extends RenderingContext> {
             if (this._iconFirstAvailable) {
                 this.onImageReady();
                 this._iconFirstAvailable = false;
-            } else {
-                if (last.fuzzyEquals(this.influence, 1e-5)) return;
             }
             this.renderAfterReady(delta);
         } else {
