@@ -46,6 +46,7 @@ type GLParams = {
 export default class GLWarpIconRenderer extends WarpIconRenderer<WebGLRenderingContext> {
 
     private _params: GLParams | null = null;
+    private _pulseTimer: number = 0;
     constructor(canvas: HTMLCanvasElement, ctx: WebGLRenderingContext, icon: LazyImage, cursor: CursorTracker) {
         super(canvas, ctx, icon, cursor);
     }
@@ -123,7 +124,6 @@ export default class GLWarpIconRenderer extends WarpIconRenderer<WebGLRenderingC
         };
     }
 
-    private _pulseTimer: number = 0;
     protected renderBeforeReady(delta: number): void {
         let v: number = 0.15 + 0.1 * Math.sin(this._pulseTimer += delta * 6);
         const gl: WebGLRenderingContext = this.ctx;
@@ -193,7 +193,7 @@ export default class GLWarpIconRenderer extends WarpIconRenderer<WebGLRenderingC
         set("p", tl.x); set("o", tr.x); set("u", bl.x); set("t", br.x);
         set("l", tl.y); set("k", tr.y); set("j", bl.y); set("h", br.y);
         set("light", light);
-        gl.uniform1i(params.vert, Math.abs(tl.x - bl.x) < 1e-4 ? 1 : 0);
+        gl.uniform1i(params.vert, Math.abs(tl.x - bl.x) < 1e-3 ? 1 : 0);
     }
 
     destroy(): void {
