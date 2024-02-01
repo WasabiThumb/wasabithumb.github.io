@@ -17,11 +17,12 @@
 import { Page } from "./page";
 import ShowcasePageWidget from "../widget/showcase";
 import ConstantsPageWidget from "../widget/constants";
-import LoginPageWidget from "../widget/login";
 import BackPageWidget from "../widget/back";
 import ProjectListPageWidget from "../widget/projectlist";
+import WarpIconPageWidget from "../widget/warpicon";
+import TextEffectsPageWidget from "../widget/textfx";
 
-export type PageWidgetType = "main-showcase" | "constants" | "login" | "back" | "project-list";
+export type PageWidgetType = "main-showcase" | "constants" | "login" | "back" | "project-list" | "warp-icon" | "text-effects";
 
 export interface PageWidget {
 
@@ -52,9 +53,10 @@ export class PageWidgets {
         this.register(
             ShowcasePageWidget,
             ConstantsPageWidget,
-            LoginPageWidget,
             BackPageWidget,
             ProjectListPageWidget,
+            WarpIconPageWidget,
+            TextEffectsPageWidget,
         );
         this.INIT_DEFAULTS = true;
     }

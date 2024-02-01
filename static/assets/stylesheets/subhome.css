@@ -56,3 +56,9 @@
     width: 90%;
     width: calc(100% - 1em);
 }
+
+.subhome-conts > .inner.one-page {
+    height: calc(100vh - 1.75em);
+    height: calc(var(--dyn-max-height) - 1.75em);
+    overflow-y: hidden;
+}

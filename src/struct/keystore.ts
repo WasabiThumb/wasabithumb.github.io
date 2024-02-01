@@ -18,18 +18,19 @@ import * as hex from "@stablelib/hex";
 import { pbkdf2 } from "pbkdf2";
 import nacl from "tweetnacl";
 import { request } from "../util/request";
+import SessionStorage from "../util/storage";
+import {Asset, AssetManager} from "./asset";
 
 
 const MAGIC: string = "nacl_secret_key";
 export default class KeyStore {
 
     static hasKey(): boolean {
-        return this._getSSP().has(MAGIC);
+        return SessionStorage.has(MAGIC);
     }
 
     static getKey(): Uint8Array | null {
-        const ssp: SessionStorageProvider = this._getSSP();
-        const raw: string | null = ssp.get(MAGIC);
+        const raw: string | null = SessionStorage.get(MAGIC);
         if (raw === null) return null;
 
         try {
@@ -43,9 +44,9 @@ export default class KeyStore {
     /**
      * DO NOT ALLOW CALLING THIS METHOD IF PROTOCOL IS NOT HTTPS
      */
-    static async login(password: string, progress?: (message: string) => void): Promise<Uint8Array | null> {
+    static async login(password: string, progress?: (message: string, state: LoginState) => void): Promise<Uint8Array> {
         const doProgress: boolean = typeof progress === "function";
-        if (doProgress) progress!("Generating key");
+        if (doProgress) progress!("Generating key", LoginState.GENERATING);
 
         const key: Uint8Array = await new Promise<Uint8Array>((res, rej) => {
             pbkdf2(password, 'Wa$abiL0vesS4lt!', 600000, nacl.secretbox.keyLength, 'sha512', function (err, key) {
@@ -57,105 +58,147 @@ export default class KeyStore {
             });
         });
 
-        if (doProgress) progress!("Verifying key");
-        let stored: string;
-        try {
-            stored = await request.getPrivate("./key", key);
-        } catch (e) {
-            console.warn(e);
-            return null;
-        }
+        if (doProgress) progress!("Verifying key", LoginState.VERIFYING);
+        let stored: string = await request.getPrivate("./key", key);
         if (stored !== password) throw new Error(`Illegal key configuration (stored: ${stored}, provided: ${password})`);
 
-        if (doProgress) progress!("Storing key");
-        const ssp: SessionStorageProvider = this._getSSP();
-        ssp.set(MAGIC, hex.encode(key, false));
+        if (doProgress) progress!("Storing key", LoginState.STORING);
+        SessionStorage.set(MAGIC, hex.encode(key, false));
 
         return key;
     }
 
-    private static _ssp: SessionStorageProvider;
-    private static _sspInit: boolean = false;
-    private static _getSSP(): SessionStorageProvider {
-        if (!this._sspInit) {
-            if (!!window["sessionStorage"]) {
-                this._ssp = new NativeSessionStorageProvider();
-            } else {
-                this._ssp = new CookieSessionStorageProvider();
-            }
-            this._sspInit = true;
-        }
-        return this._ssp;
+    static async loginModal(): Promise<Uint8Array> {
+        const container: HTMLDivElement = document.createElement("div");
+        container.style.zIndex = "9999";
+        container.style.background = "rgba(0, 0, 0, 0.6)";
+        container.style.position = "fixed";
+        container.style.left = "0px";
+        container.style.top = "0px";
+        container.style.width = "100vw";
+        container.style.height = `max(inherit, ${window.innerHeight}px)`;
+        container.style.animationName = "fade-in";
+        container.style.animationDuration = "200ms";
+        container.style.animationTimingFunction = "ease-in-out";
+        container.classList.add("login-modal");
+        document.body.appendChild(container);
+
+        const css: HTMLLinkElement = document.createElement("link");
+        css.rel = "stylesheet";
+        css.href = "assets/stylesheets/login-modal.css";
+
+        const asset: Asset = AssetManager.getOrCreate(css);
+        await new Promise<Asset>((res) => {
+            asset.onLoad(res);
+        });
+
+        const inner: HTMLDivElement = document.createElement("div");
+        inner.classList.add("inner");
+
+        const h2 = document.createElement("h2");
+        h2.innerText = "Authentication";
+        inner.appendChild(h2);
+
+        const p = document.createElement("p");
+        p.innerText = "Enter my personal e-mail address to view private content";
+        inner.appendChild(p);
+
+        const inputEmail: HTMLInputElement = document.createElement("input");
+        inputEmail.type = "email";
+        inputEmail.placeholder = "name@domain.com";
+        inner.appendChild(inputEmail);
+
+        const inputSubmit: HTMLInputElement = document.createElement("input");
+        inputSubmit.type = "submit";
+        inputSubmit.value = "✓";
+        inner.appendChild(inputSubmit);
+
+        const span: HTMLSpanElement = document.createElement("span");
+        span.innerText = "i'm a ninja";
+        inner.appendChild(span);
+
+        container.appendChild(inner);
+        inner.addEventListener("click", (e) => {
+            e.stopPropagation();
+        });
+        inputEmail.focus();
+
+        //
+
+        const closeContainer = (() => document.body.removeChild(container));
+        let statusClearTimeout: number = -1;
+        const pushStatus = ((text: string, color?: string) => {
+            window.clearTimeout(statusClearTimeout);
+            span.classList.remove("updated");
+            span.innerText = text;
+            span.style.color = color || "inherit";
+            span.classList.add("updated");
+            statusClearTimeout = window.setTimeout(() => {
+                span.classList.remove("updated");
+            }, 2500);
+        });
+
+        return new Promise<Uint8Array>((res, rej) => {
+            container.addEventListener("click", () => {
+                closeContainer();
+                rej("Login modal closed by user");
+            });
+
+            const submit = (async () => {
+                const loc: Location = window["location"] || location;
+                if (loc.protocol !== "https:" && !(loc.hostname === "localhost" || loc.hostname === "127.0.0.1")) {
+                    pushStatus("Refusing to authenticate (not using HTTPS)", "red");
+                    return;
+                }
+
+                let reachedState: LoginState = LoginState.GENERATING;
+                try {
+                    pushStatus("Authenticating");
+                    const key = await KeyStore.login(inputEmail.value, (msg: string, state: LoginState) => {
+                        pushStatus(msg);
+                        reachedState = state;
+                    });
+                    pushStatus("Success", "#3db406");
+                    await new Promise((res) => setTimeout(res, 500));
+                    closeContainer();
+                    res(key);
+                } catch (e) {
+                    if ((reachedState as LoginState) === LoginState.VERIFYING) {
+                        pushStatus("Could not verify key. Please try again with a different e-mail.", "red");
+                    } else {
+                        pushStatus("Unexpected error. Please try again.", "red");
+                        console.warn(e);
+                    }
+                }
+            });
+
+            let lockSubmissions: boolean = false;
+            const submitSync = (() => {
+                if (lockSubmissions) return;
+                lockSubmissions = true;
+                submit().then(() => {
+                    lockSubmissions = false;
+                }).catch((e) => {
+                    lockSubmissions = false;
+                    closeContainer();
+                    rej(e);
+                });
+            });
+
+            inputEmail.addEventListener("keydown", (e: KeyboardEvent) => {
+                if (e.code === "Enter" || e.which === 13 || e.keyCode === 13) {
+                    e.preventDefault();
+                    submitSync();
+                }
+            });
+            inputSubmit.addEventListener("click", submitSync);
+        });
     }
 
 }
 
-interface SessionStorageProvider {
-
-    get(key: string): string | null;
-
-    set(key: string, value: string): void;
-
-    has(key: string): boolean;
-
-    remove(key: string): void;
-
-}
-
-class NativeSessionStorageProvider implements SessionStorageProvider {
-
-    get(key: string): string | null {
-        return window.sessionStorage.getItem(key);
-    }
-
-    has(key: string): boolean {
-        return this.get(key) !== null;
-    }
-
-    set(key: string, value: string): void {
-        window.sessionStorage.setItem(key, value);
-    }
-
-    remove(key: string): void {
-        window.sessionStorage.removeItem(key);
-    }
-
-}
-
-class CookieSessionStorageProvider implements SessionStorageProvider {
-
-    get(key: string): string | null {
-        const keyEq = `${key}=`;
-        const keyStart = keyEq.charAt(0);
-        const components: string[] = document.cookie.split(";");
-
-        outer:
-        for (let i=0; i < components.length; i++) {
-            const component: string = components[i];
-            let z: number = 0;
-            while (z < component.length) {
-                const char = component.charAt(z);
-                if (char === keyStart) break;
-                if (char !== " ") continue outer;
-                z++;
-            }
-            if (component.indexOf(keyEq) === z) return component.substring(z + keyEq.length, component.length);
-        }
-        return null;
-    }
-
-    has(key: string): boolean {
-        return this.get(key) !== null;
-    }
-
-    set(key: string, value: string): void {
-        const date = new Date();
-        date.setTime(date.getTime() + 900000);
-        document.cookie = `${key}=${encodeURIComponent(value)}; expires=${date.toUTCString()}; path=/`;
-    }
-
-    remove(key: string): void {
-        document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
-    }
-
+export enum LoginState {
+    GENERATING,
+    VERIFYING,
+    STORING
 }

@@ -1,0 +1,102 @@
+
+.login-modal {
+    height: var(--dyn-max-height);
+}
+
+.login-modal > .inner {
+    max-width: 80%;
+    box-sizing: border-box;
+    text-align: center;
+    background-color: #efefef;
+    color: #0c0c0c;
+    font-size: min(4vw, 4vh);
+    padding: 0.5em;
+    border-radius: 0.25em;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 50vh;
+    margin-top: calc(var(--dyn-max-height) * 0.5);
+    transform: translateY(-50%);
+    filter: drop-shadow(0 0 0.75em black);
+    animation-name: skadoosh;
+    animation-duration: 300ms;
+    animation-timing-function: ease-in-out;
+}
+
+@keyframes skadoosh {
+    0% {
+        opacity: 0;
+        transform: scaleX(0) scaleY(0) translateY(-50%);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scaleX(1) scaleY(0) translateY(-50%);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scaleX(1) scaleY(1) translateY(-50%);
+    }
+}
+
+.login-modal > .inner h2 {
+    color: inherit;
+    font-size: 1.25em;
+    font-weight: bold;
+    font-family: 'Bebas Neue', sans-serif;
+    margin-top: 0.5em;
+    margin-bottom: 0.25em;
+}
+
+.login-modal > .inner p {
+    color: inherit;
+    font-size: 0.6em;
+    font-family: 'Ubuntu', sans-serif;
+    margin-top: 0;
+    margin-bottom: 0.5em;
+}
+
+.login-modal > .inner input[type=email] {
+    display: inline-block;
+    font-size: 0.8em;
+    min-width: 14em;
+    background: none;
+    color: #1c1c1c;
+    padding: 0.2em;
+    border: 0.05em solid #0c0c0c;
+    border-radius: 0.2em;
+    margin-bottom: 0.3em;
+    font-family: 'Ubuntu Mono', monospace;
+}
+
+.login-modal > .inner input[type=submit] {
+    display: inline-block;
+    font-size: 0.8em;
+    padding: 0.1em;
+    padding-left: 0.3em;
+    padding-right: 0.3em;
+    border-radius: 0.2em;
+    margin-left: 0.2em;
+    border: none;
+    background-color: #3db406;
+    color: #efefef;
+    cursor: pointer;
+}
+
+.login-modal > .inner span {
+    color: inherit;
+    font-size: 0.5em;
+    font-family: 'Ubuntu Mono', monospace;
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.login-modal > .inner span.updated {
+    animation-name: fade-out;
+    animation-duration: 2.5s;
+    animation-timing-function: cubic-bezier(0.64, 0, 0.78, 0);
+}

@@ -172,6 +172,17 @@ export abstract class Vector {
         return this as T;
     }
 
+    fuzzyEquals(other: Vector, threshold: number = 1e-9): boolean {
+        const mc = this._components;
+        const oc = other._components;
+
+        if (mc.length !== oc.length) return false;
+        for (let i=0; i < mc.length; i++) {
+            if (Math.abs(mc[i] - oc[i]) >= threshold) return false;
+        }
+        return true;
+    }
+
 }
 
 
