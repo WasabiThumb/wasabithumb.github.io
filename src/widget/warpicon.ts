@@ -21,6 +21,7 @@ import WarpIconRenderer from "./warpicon/renderer";
 import GLWarpIconRenderer from "./warpicon/gl";
 import FlatWarpIconRenderer from "./warpicon/flat";
 import {CursorTracker} from "../util/input";
+import UAParser from "ua-parser-js";
 
 const CTXS: ("2d" | "webgl" | "experimental-webgl")[] = ["2d", "webgl", "experimental-webgl"];
 
@@ -42,6 +43,11 @@ export default class WarpIconPageWidget implements PageWidget {
         let canvas: HTMLCanvasElement;
         let renderer: WarpIconRenderer<any>;
         let gl: -1 | 0 | 1 | 2 = -1;
+
+        const uaParser = new UAParser(window.navigator.userAgent);
+        const deviceType: string | undefined = uaParser.getDevice().type;
+        if ("mobile" === deviceType || "tablet" === deviceType) gl = 0;
+
         for (let i=0; i < query.length; i++) {
             canvas = query.item(i);
 

@@ -22,6 +22,7 @@ import {NPair, TransmitMetaBall} from "./metaballs/types";
 import {MetaBallsContourSolverImpl, MetaBallsContourSolver} from "./metaballs/solver";
 import {MetaBallsThreadPool} from "./metaballs/threadpool";
 import {CONTOURS_BYTES} from "./metaballs/contourdata";
+import UAParser from "ua-parser-js";
 
 type MetaBall = {
     id: number,
@@ -37,7 +38,7 @@ const metaBallTransmit: ((mb: MetaBall) => TransmitMetaBall) = ((mb) => {
 const noWorker: boolean = (() => {
     if (typeof Worker !== "function") return true;
     try {
-        return /firefox/i.test(window.navigator.userAgent);
+        return "Gecko" === (new UAParser(window.navigator.userAgent)).getEngine().name;
     } catch (e) { }
     return false;
 })();

@@ -110,7 +110,7 @@ export default class KeyStore {
 
         const inputSubmit: HTMLInputElement = document.createElement("input");
         inputSubmit.type = "submit";
-        inputSubmit.value = "✓";
+        inputSubmit.value = "🏃︎";
         inner.appendChild(inputSubmit);
 
         const span: HTMLSpanElement = document.createElement("span");

@@ -19,6 +19,7 @@ import * as utf8 from "@stablelib/utf8";
 import * as base64 from "@stablelib/base64";
 import { absoluteURL } from "../util/url";
 import {request} from "../util/request";
+import CollectionUtil from "../util/collection";
 
 
 export type AssetElement = HTMLScriptElement | HTMLLinkElement;
@@ -253,6 +254,9 @@ export class LazyImage {
         this._available = false;
         this._value = null;
         this._init = false;
+        for (let grid of CollectionUtil.mapValues(this._gridCache)){
+            if (!!grid) grid.close();
+        }
         this._gridCache = {};
     }
 

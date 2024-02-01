@@ -36,6 +36,7 @@ export default class LoginTextEffect implements TextEffect {
         center.style.filter = "drop-shadow(0 0 0.75em black)";
         center.style.cursor = "pointer";
         center.alt = "Encrypted";
+        center.classList.add("hover-expand-wiggle");
 
         const parent = target.parentElement!;
         parent.style.position = "relative";
