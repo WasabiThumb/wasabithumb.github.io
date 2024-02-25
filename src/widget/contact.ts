@@ -377,7 +377,7 @@ type BackgroundCSS = BackgroundCSSSolid | BackgroundCSSRadialGradient;
 type BackgroundCSSSolid = { red: number, green: number, blue: number, type: "solid" };
 const BackgroundCSSSolidRegExp: RegExp = /rgb\((\d+),\s*(\d+),\s*(\d+)\)$/i;
 type BackgroundCSSRadialGradient = { start: BackgroundCSSSolid, end: BackgroundCSSSolid, type: "gradient" };
-const BackgroundCSSRadialGradientRegExp: RegExp = /rgb\((\d+),\s*(\d+),\s*(\d+)\)\s+0%,\s*rgb\((\d+),\s*(\d+),\s*(\d+)\)\s+100%\)$/i;
+const BackgroundCSSRadialGradientRegExp: RegExp = /rgb\((\d+),\s*(\d+),\s*(\d+)\)\s+0(?:px|%)?,\s*rgb\((\d+),\s*(\d+),\s*(\d+)\)\s+100(?:px|%)?\)$/i;
 const BackgroundCSSBlack: BackgroundCSSSolid = { red: 0, green: 0, blue: 0, type: "solid" };
 
 class SwapAnimationStage extends AnimationStage {
