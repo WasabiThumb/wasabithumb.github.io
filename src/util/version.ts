@@ -15,4 +15,4 @@
 */
 
 // This file will be dynamically filled with the correct version string when the project is built.
-export const LIB_VERSION: string = "1.4.0-git-9f9506d";
+export const LIB_VERSION: string = "1.4.0-git-ec56bba";
