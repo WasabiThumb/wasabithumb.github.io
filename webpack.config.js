@@ -54,6 +54,10 @@ module.exports = (async () => {
                     {
                         from: `node_modules/howler/dist/howler${vd.mode === "production" ? ".core.min.js" : ".js"}`,
                         to: path.resolve(__dirname, 'dist', 'assets', 'javascript', 'howler.js')
+                    },
+                    {
+                        from: `node_modules/swiped-events/dist/swiped-events.min.js`,
+                        to: path.resolve(__dirname, 'dist', 'assets', 'javascript', 'swiped-events.js')
                     }
                 ]
             }),

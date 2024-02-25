@@ -21,6 +21,7 @@ try {
     console.warn("No private key found, skipping private file processing");
     process.exit(0);
 }
+console.info("Checking private contents");
 
 const privateKey = fs.readFileSync(privateKeyFile, { encoding: "utf8" });
 const derivedKey = pbkdf2.pbkdf2Sync(
@@ -75,7 +76,6 @@ const checkNotChanged = ((data, dest) => {
 });
 const encrypt = ((file) => {
     const rel = path.relative(privateDir, file);
-    console.log("Encrypting file \"" + rel + "\"");
     PROCESSED.push(rel);
 
     const dest = path.join(staticDir, rel + ".private");
@@ -87,10 +87,8 @@ const encrypt = ((file) => {
     }
 
     const data = fs.readFileSync(file);
-    if (checkNotChanged(data, dest)) {
-        console.log("File was not changed since last encrypt, skipping");
-        return;
-    }
+    if (checkNotChanged(data, dest)) return;
+    console.log("Encrypting file \"" + rel + "\"");
     const handle = fs.openSync(dest, 'w');
 
     const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);

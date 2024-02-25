@@ -82,6 +82,7 @@
     background-color: #3db406;
     color: #efefef;
     cursor: pointer;
+    transform: translateY(5%);
 }
 
 .login-modal > .inner span {

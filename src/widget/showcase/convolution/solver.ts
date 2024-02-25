@@ -339,10 +339,11 @@ function parseImageSource(image: CanvasImageSource): ImageSourceParseResults {
             valid = false;
         }
     } else {
-        if (image instanceof OffscreenCanvas || image instanceof ImageBitmap) {
-            w = image.width;
-            h = image.height;
-            isCanvas = true;
+        let off: boolean = image instanceof OffscreenCanvas;
+        if (off || image instanceof ImageBitmap) {
+            w = (image as OffscreenCanvas | ImageBitmap).width;
+            h = (image as OffscreenCanvas | ImageBitmap).height;
+            isCanvas = off;
         } else if (image instanceof VideoFrame) {
             w = image.displayWidth;
             h = image.displayHeight;

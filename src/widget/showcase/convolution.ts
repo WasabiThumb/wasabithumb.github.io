@@ -24,6 +24,7 @@ import {ConvolutionKernel} from "./convolution/types";
 import {ConvolutionKernels} from "./convolution/kernels";
 import {RGB} from "../../util/color";
 import {CursorTracker} from "../../util/input";
+import UAParser from "ua-parser-js";
 
 
 const KERNELS: ConvolutionKernel[] = [
@@ -82,10 +83,8 @@ export default class ConvolutionShowcaseSlide implements ShowcaseSlide {
 
         let solver: ConvolutionSolver;
         if (!this._solverInit) {
-            let firefox: boolean = false;
-            try {
-                firefox = /firefox/i.test(window.navigator.userAgent);
-            } catch (e) { }
+            const parser = new UAParser(window.navigator.userAgent);
+            let firefox: boolean = "Gecko" === parser.getEngine().name;
             solver = createSolver(firefox ? 256 : 128);
             solver.init(this._image.get());
             this._solver = solver;

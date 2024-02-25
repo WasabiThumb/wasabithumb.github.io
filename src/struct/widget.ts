@@ -21,8 +21,9 @@ import BackPageWidget from "../widget/back";
 import ProjectListPageWidget from "../widget/projectlist";
 import WarpIconPageWidget from "../widget/warpicon";
 import TextEffectsPageWidget from "../widget/textfx";
+import ContactPageWidget from "../widget/contact";
 
-export type PageWidgetType = "main-showcase" | "constants" | "login" | "back" | "project-list" | "warp-icon" | "text-effects";
+export type PageWidgetType = "main-showcase" | "constants" | "login" | "back" | "project-list" | "warp-icon" | "text-effects" | "contact";
 
 export interface PageWidget {
 
@@ -57,6 +58,7 @@ export class PageWidgets {
             ProjectListPageWidget,
             WarpIconPageWidget,
             TextEffectsPageWidget,
+            ContactPageWidget,
         );
         this.INIT_DEFAULTS = true;
     }
